@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component LANGUAGE_LEVEL="JDK_21" inheritJdk="true">
+	<output-test url="file://$MODULE_DIR$/target/test-classes"/>
+	<contentEntry url="file://$MODULE_DIR$">
+		<testFolder url="file://$MODULE_DIR$/src/test/java"/>
+		<testFolder url="file://$MODULE_DIR$/src/test/resources"/>
+		<excludeFolder url="file://$MODULE_DIR$/target"/>
+	</contentEntry>
+	<levels>
+		<level name="Maven: org.springframework.boot:spring-boot-starter-web:3.2.5" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot-starter:3.2.5" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot:3.2.5" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot-autoconfigure:3.2.5" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot-starter-logging:3.2.5" value="project"/>
+		<level name="Maven: ch.qos.logback:logback-classic:1.4.14" value="project"/>
+		<level name="Maven: ch.qos.logback:logback-core:1.4.14" value="project"/>
+		<level name="Maven: org.apache.logging.log4j:log4j-to-slf4j:2.21.1" value="project"/>
+		<level name="Maven: org.apache.logging.log4j:log4j-api:2.21.1" value="project"/>
+		<level name="Maven: org.slf4j:jul-to-slf4j:2.0.13" value="project"/>
+		<level name="Maven: jakarta.annotation:jakarta.annotation-api:2.1.1" value="project"/>
+		<level name="Maven: org.springframework:spring-core:6.1.6" value="project"/>
+		<level name="Maven: org.springframework:spring-jcl:6.1.6" value="project"/>
+		<level name="Maven: org.yaml:snakeyaml:2.2" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot-starter-json:3.2.5" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.core:jackson-databind:2.15.4" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.15.4" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.core:jackson-core:2.15.4" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.15.4" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.4" value="project"/>
+		<level name="Maven: com.fasterxml.jackson.module:jackson-module-parameter-names:2.15.4" value="project"/>
+		<level name="Maven: org.springframework.boot:spring-boot-starter-tomcat:3.2.5" value="project"/>
+		<level name="Maven: org.apache.tomcat.embed:tomcat-embed-core:10.1.20" value="project"/>
+		<level name="Maven: org.apache.tomcat.embed:tomcat-embed-el:10.1.20" value="project"/>
+		<level name="Maven: org.apache.tomcat.embed:tomcat-embed-websocket:10.1.20" value="project"/>
+		<level name="Maven: org.springframework:spring-web:6.1.6" value="project"/>
+		<level name="Maven: org.springframework:spring-beans:6.1.6" value="project"/>
+		<level name="Maven: io.micrometer:micrometer-observation:1.12.5" value="project"/>
+		<level name="Maven: io.micrometer:micrometer-commons:1.12.5" value="project"/>
+		<level name="Maven: org.springframework:spring-webmvc:6.1.6" value="project"/>
+		<level name="Maven: org.springframework:spring-aop:6.1.6" value="project"/>
+		<level name="Maven: org.springframework:spring-context:6.1.6" value="project"/>
+		<level name="Maven: org.springframework:spring-expression:6.1.6" value="project"/>
+		<level name="Maven: org.xerial:sqlite-jdbc:3.45.1.0" value="project"/>
+		<level name="Maven: org.slf4j:slf4j-api:2.0.13" value="project"/>
+		<level name="Maven: org.mindrot:jbcrypt:0.4" value="project"/>
+	</levels>
+</component>

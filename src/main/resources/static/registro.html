@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Cuenta - Apuntes NUR</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body>
+
+<div class="contenedor-login">
+    <h1>Únete a la Plataforma</h1>
+    <p>Crea tu cuenta para empezar a compartir y descargar apuntes.</p>
+
+    <form action="/registrar-usuario" method="POST">
+
+        <div class="grupo-input">
+            <label for="aliasUsuario">Nombre de Usuario (Alias)</label>
+            <input type="text" id="aliasUsuario" name="aliasUsuario" placeholder="Ej: lucca_dev" required>
+        </div>
+
+        <div class="grupo-input">
+            <label for="nombreCompleto">Nombre Completo</label>
+            <input type="text" id="nombreCompleto" name="nombreCompleto" required>
+        </div>
+
+        <div class="grupo-input">
+            <label for="numeroCredencial">Registro NUR</label>
+            <input type="text" id="numeroCredencial" name="numeroCredencial" placeholder="Ej: REG-2026" required>
+        </div>
+
+        <div class="grupo-input">
+            <label for="claveUsuario">Contraseña Segura</label>
+            <input type="password" id="claveUsuario" name="claveUsuario" required>
+        </div>
+
+        <button type="submit" class="boton-ingresar">Crear Mi Cuenta</button>
+    </form>
+
+    <br>
+    <a href="/" style="color: #3498db; text-decoration: none; font-weight: bold; font-size: 14px;">¿Ya tienes cuenta? Inicia Sesión aquí</a>
+</div>
+
+</body>
+</html>

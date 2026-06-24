@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Virtual - Apuntes NUR</title>
+    <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body class="cuerpo-dashboard">
+
+<nav class="barra-navegacion">
+    <h2 class="logo-texto">Apuntes NUR</h2>
+    <div class="info-usuario">
+        <span class="etiqueta-creditos">Mis Créditos: <b id="creditos-actuales">0</b></span>
+        <a href="/static" class="boton-salir">Cerrar Sesión</a>
+    </div>
+</nav>
+
+<main class="contenedor-principal">
+
+    <section class="tarjeta-modulo">
+        <h3>Compartir un Apunte</h3>
+        <p>Sube tus notas en formato PDF o Markdown (.md) y gana créditos virtuales.</p>
+
+        <form action="/subir-apunte" method="POST" enctype="multipart/form-data" class="formulario-subida">
+            <input type="text" name="tituloApunte" placeholder="Ej: Resumen de Vectores y Matrices" required>
+            <select name="categoriaMateria" required>
+                <option value="" disabled selected>Selecciona la materia...</option>
+                <option value="Algebra">Álgebra Lineal</option>
+                <option value="Fisica">Física y Electricidad</option>
+                <option value="Programacion">Programación Orientada a Objetos</option>
+            </select>
+            <input type="file" name="archivoFisico" accept=".md,.pdf,.docx" required>
+            <button type="submit" class="boton-accion">Subir Documento</button>
+        </form>
+    </section>
+
+    <hr class="separador">
+
+    <section class="tarjeta-modulo">
+        <h3>Tienda de Apuntes</h3>
+        <p>Explora el material de tus compañeros. Cada descarga consume 5 créditos.</p>
+
+        <div class="cuadricula-apuntes">
+
+            <article class="apunte-item">
+                <h4>Conceptos de Checkm8</h4>
+                <span class="materia-etiqueta">Sistemas Operativos</span>
+                <p>Autor: <b>lucca_dev</b></p>
+                <p>Valoración: ⭐ 4.8 / 5</p>
+                <button class="boton-descarga">Descargar (-5 Créditos)</button>
+            </article>
+
+        </div>
+    </section>
+
+</main>
+
+</body>
+</html>

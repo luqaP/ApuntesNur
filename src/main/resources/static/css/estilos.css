@@ -1,0 +1,264 @@
+/* Seleccionamos todos los elementos de la página mediante el selector universal (asterisco). */
+* {
+    /* Eliminamos todos los márgenes exteriores por defecto para controlar los espacios manualmente. */
+    margin: 0;
+    /* Eliminamos los rellenos interiores por defecto que aplican de forma invasiva los navegadores web. */
+    padding: 0;
+    /* Forzamos a que el tamaño total de la caja incluya los bordes y rellenos sin destruir nuestras proporciones. */
+    box-sizing: border-box;
+    /* Cerramos la regla de reseteo universal. */
+}
+
+/* Seleccionamos la etiqueta body para darle el estilo y centrado general a toda la ventana del navegador. */
+body {
+    /* Aplicamos la tipografía Segoe UI o similares, las cuales son ideales y elegantes para pantallas digitales. */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    /* Definimos un color de fondo gris claro para que la vista del estudiante no se fatigue al estudiar. */
+    background-color: #eef2f5;
+    /* Activamos el modelo de caja flexible (Flexbox) para poder manipular la alineación matemáticamente. */
+    display: flex;
+    /* Centramos todo el contenido horizontalmente a lo ancho de la pantalla del dispositivo. */
+    justify-content: center;
+    /* Centramos todo el contenido verticalmente a lo alto de la pantalla del dispositivo. */
+    align-items: center;
+    /* Le damos a la página una altura exacta del 100% del tamaño visible del viewport (la ventana). */
+    height: 100vh;
+    /* Cerramos las reglas de estilo del cuerpo de la página. */
+}
+
+/* Seleccionamos nuestra clase personalizada contenedor-login para estilizar la tarjeta central de acceso. */
+.contenedor-login {
+    /* Le asignamos un fondo blanco puro para crear un fuerte contraste jerárquico con el gris exterior. */
+    background-color: #ffffff;
+    /* Añadimos un relleno interno amplio de 40 píxeles para que los textos e inputs no peguen asfixiantemente en el borde. */
+    padding: 40px;
+    /* Redondeamos las cuatro esquinas de la caja con 12 píxeles para lograr un diseño amigable y moderno. */
+    border-radius: 12px;
+    /* Proyectamos una sombra difuminada muy suave para dar una ilusión de flotación sobre el fondo. */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    /* Establecemos un ancho máximo de 400 píxeles para mantener proporciones correctas en pantallas de escritorio. */
+    max-width: 400px;
+    /* Le indicamos que ocupe el 100% del espacio disponible, pero respetando siempre el límite máximo de arriba. */
+    width: 100%;
+    /* Alineamos todos los títulos y descripciones estrictamente al centro de nuestra nueva tarjeta. */
+    text-align: center;
+    /* Cerramos las reglas maestras de la tarjeta principal. */
+}
+
+/* Seleccionamos el título principal h1 que está anidado dentro de nuestra clase contenedor-login. */
+.contenedor-login h1 {
+    /* Aplicamos un color gris muy oscuro (casi negro) para el título, dándole el peso visual correcto. */
+    color: #333333;
+    /* Separamos el título del párrafo inferior agregando un pequeño margen de 10 píxeles. */
+    margin-bottom: 10px;
+    /* Cerramos las reglas de jerarquía del título. */
+}
+
+/* Seleccionamos el párrafo descriptivo anidado dentro de la caja de login. */
+.contenedor-login p {
+    /* Usamos un color gris intermedio para diferenciar visualmente este texto secundario restándole atención. */
+    color: #666666;
+    /* Agregamos un margen inferior de 30 píxeles para separarlo de manera contundente de las cajas de texto. */
+    margin-bottom: 30px;
+    /* Cerramos las reglas del párrafo. */
+}
+
+/* Seleccionamos la clase grupo-input que envuelve arquitectónicamente cada etiqueta y su respectiva caja. */
+.grupo-input {
+    /* Alineamos los elementos de este grupo hacia la izquierda para facilitar la lectura natural del usuario. */
+    text-align: left;
+    /* Añadimos un margen inferior de 20 píxeles para separar la caja del usuario de la caja de la contraseña. */
+    margin-bottom: 20px;
+    /* Cerramos las reglas del contenedor de los inputs. */
+}
+
+/* Seleccionamos todas las etiquetas de texto (labels) de la página. */
+label {
+    /* Forzamos a la etiqueta a comportarse como un bloque completo para que el input caiga a la línea de abajo automáticamente. */
+    display: block;
+    /* Reducimos ligeramente el tamaño de la fuente a 14 píxeles para mantener el diseño sutil. */
+    font-size: 14px;
+    /* Ponemos el texto en negrita (bold) para que resalte y sea rápidamente identificable por el estudiante. */
+    font-weight: bold;
+    /* Usamos un color gris oscuro para mantener la coherencia cromática con el título principal. */
+    color: #444444;
+    /* Separamos la etiqueta de su propia caja de texto añadiendo apenas 5 píxeles de margen inferior. */
+    margin-bottom: 5px;
+    /* Cerramos las reglas estructurales de las etiquetas. */
+}
+
+/* Seleccionamos explícitamente y al mismo tiempo los campos de entrada de tipo texto y de tipo contraseña. */
+input[type="text"], input[type="password"] {
+    /* Forzamos a que ambas cajas de texto ocupen el 100% del ancho del contenedor en el que viven. */
+    width: 100%;
+    /* Agregamos un relleno interno de 12 píxeles para que al escribir, el cursor no choque claustrofóbicamente con el borde. */
+    padding: 12px;
+    /* Dibujamos un borde sólido muy fino y de color gris claro alrededor de las dos cajas. */
+    border: 1px solid #cccccc;
+    /* Redondeamos ligeramente las esquinas de los inputs con 6 píxeles para suavizar la agresividad de las puntas. */
+    border-radius: 6px;
+    /* Aumentamos el tamaño de la letra tipada a 16 píxeles para mejorar la accesibilidad visual. */
+    font-size: 16px;
+    /* Añadimos una transición temporal al borde para que cambie de color de forma animada cuando se seleccione. */
+    transition: border-color 0.3s ease;
+    /* Cerramos las reglas base de diseño de los inputs. */
+}
+
+/* Usamos la pseudo-clase focus para alterar dinámicamente el diseño de la caja solo cuando el estudiante hace clic dentro. */
+input[type="text"]:focus, input[type="password"]:focus {
+    /* Eliminamos el contorno negro o azul feo por defecto que colocan algunos navegadores web. */
+    outline: none;
+    /* Cambiamos el color del borde a un azul oscuro profundo para indicar visualmente que el campo está activo. */
+    border-color: #2c3e50;
+    /* Cerramos las reglas de estado de enfoque. */
+}
+
+/* Seleccionamos nuestro botón personalizado para ingresar al sistema mediante su clase. */
+.boton-ingresar {
+    /* Hacemos que el botón se expanda y ocupe absolutamente todo el ancho disponible del formulario. */
+    width: 100%;
+    /* Le aplicamos un relleno interno generoso de 12 píxeles para que el área de clic sea inmensa y cómoda. */
+    padding: 12px;
+    /* Usamos un color azul corporativo oscuro como fondo principal de nuestra llamada a la acción. */
+    background-color: #2c3e50;
+    /* Hacemos que el texto interno del botón sea completamente blanco para maximizar el contraste. */
+    color: white;
+    /* Eliminamos cualquier borde predeterminado que el sistema operativo intente forzarle. */
+    border: none;
+    /* Redondeamos las esquinas del botón con la misma matemática (6px) que usamos en los inputs para dar armonía. */
+    border-radius: 6px;
+    /* Aumentamos el tamaño de la fuente a 16 píxeles para que el comando sea imperativo y claro. */
+    font-size: 16px;
+    /* Hacemos que el texto "Iniciar Sesión" esté en negrita absoluta para otorgarle prioridad visual. */
+    font-weight: bold;
+    /* Cambiamos el cursor del mouse a una mano cuando pase por encima, indicándole al usuario que es clickeable. */
+    cursor: pointer;
+    /* Agregamos una transición suave al color de fondo para que reaccione al movimiento del mouse. */
+    transition: background-color 0.3s ease;
+    /* Cerramos las reglas base estructurales del botón. */
+}
+
+/* Usamos la pseudo-clase hover para alterar el color del botón en el instante exacto en que el mouse pasa por encima. */
+.boton-ingresar:hover {
+    /* Aclaramos ligeramente el color azul profundo a uno un poco más vivo para dar retroalimentación háptica visual. */
+    background-color: #34495e;
+    /* Cerramos la regla de interacción del botón principal. */
+}
+/* Sobrescribimos el comportamiento del body general solo cuando tenga la clase 'cuerpo-dashboard'. */
+body.cuerpo-dashboard {
+    /* Cambiamos el display flex centrado por un bloque estándar para que el contenido fluya de arriba hacia abajo. */
+    display: block;
+    /* Redefinimos la altura a auto para que la página pueda scrollear si hay muchos apuntes. */
+    height: auto;
+}
+
+/* Diseñamos la barra superior para que funcione como el ancla de navegación. */
+.barra-navegacion {
+    /* Aplicamos el azul oscuro corporativo para darle solidez al sistema. */
+    background-color: #2c3e50;
+    /* Texto en blanco para el máximo contraste. */
+    color: white;
+    /* Distribuimos el logo a la izquierda y el panel a la derecha usando Flexbox. */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Relleno interno para darle respiro a los bordes. */
+    padding: 15px 30px;
+    /* Sombra inferior para separarlo visualmente del fondo gris. */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Removemos los subrayados feos de los enlaces y les damos color blanco. */
+.barra-navegacion a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-weight: bold;
+}
+
+/* Envolvemos el área de trabajo central, limitando el ancho para no estirar los formularios en monitores gigantes. */
+.contenedor-principal {
+    max-width: 900px;
+    /* Centramos el contenedor automáticamente con márgenes en 'auto'. */
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* Estilizamos las tarjetas blancas donde viven los módulos de subir y descargar. */
+.tarjeta-modulo {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+/* Forzamos a que los elementos del formulario de subida tengan una separación limpia. */
+.formulario-subida input, .formulario-subida select, .formulario-subida button {
+    display: block;
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: inherit;
+}
+
+/* Le damos estilo al botón genérico de acción principal. */
+.boton-accion {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+/* Establecemos una línea divisoria sutil entre las tarjetas. */
+.separador {
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
+    margin: 30px 0;
+}
+
+/* Convertimos el contenedor de los apuntes en una cuadrícula (Grid) inteligente. */
+.cuadricula-apuntes {
+    display: grid;
+    /* Le decimos a CSS que cree tantas columnas de al menos 250px como quepan, adaptándose automáticamente a pantallas pequeñas. */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Estilizamos individualmente el "producto" o archivo de la tienda. */
+.apunte-item {
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: left;
+}
+
+/* Damos estilo a la píldora visual que indica la materia. */
+.materia-etiqueta {
+    display: inline-block;
+    background-color: #eef2f5;
+    color: #2c3e50;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* Creamos un botón azul claro amigable para la acción de descargar. */
+.boton-descarga {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
