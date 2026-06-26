@@ -18,6 +18,27 @@
             <label for="aliasUsuario">Nombre de Usuario (Alias)</label>
             <input type="text" id="aliasUsuario" name="aliasUsuario" placeholder="Ej: lucca_dev" required>
         </div>
+        <div class="input-grupo" style="position: relative;">
+            <input type="password" id="campoContrasena" name="contrasena" placeholder="Contraseña" required>
+            <button type="button" onclick="alternarVisibilidad()" style="position: absolute; right: 10px;">👁️</button>
+        </div>
+
+        <script>
+            // Función pública para manipular el atributo 'type' del elemento HTML.
+            function alternarVisibilidad() {
+                // Obtenemos la referencia al elemento input mediante su ID único.
+                var campo = document.getElementById("campoContrasena");
+                // Evaluamos si el tipo actual es 'password' para cambiarlo a 'text'.
+                if (campo.type === "password") {
+                    // Cambiamos el tipo a texto para revelar los caracteres al usuario.
+                    campo.type = "text";
+                } else {
+                    // Revertimos a 'password' para volver a enmascarar la entrada.
+                    campo.type = "password";
+                }
+                // Cerramos la función de visibilidad.
+            }
+        </script>
 
         <div class="grupo-input">
             <label for="nombreCompleto">Nombre Completo</label>

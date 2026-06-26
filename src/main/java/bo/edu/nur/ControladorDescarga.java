@@ -1,97 +1,93 @@
-// Definimos el paquete arquitectónico de la universidad.
+// Declaramos el paquete estructural de la universidad NUR.
 package bo.edu.nur;
 
-// Importamos GetMapping porque las descargas en los navegadores se ejecutan mediante peticiones GET.
+// Importamos todas las herramientas necesarias para la gestión de peticiones web, binarios y redirecciones.
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-// Importamos ResponseEntity para poder devolver un archivo físico en lugar de texto o HTML.
+import org.springframework.stereotype.Controller;
 import org.springframework.http.ResponseEntity;
-// Importamos HttpHeaders para decirle a Google Chrome "¡Oye, esto es un archivo, descárgalo!".
 import org.springframework.http.HttpHeaders;
-// Importamos MediaType para definir que enviaremos un flujo de bytes genéricos.
 import org.springframework.http.MediaType;
-// Importamos Resource y UrlResource para mapear el archivo del disco duro hacia la red.
+import org.springframework.http.HttpStatus;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-// Importamos Paths y Path para navegar por las carpetas de Windows de forma segura.
 import java.nio.file.Path;
 import java.nio.file.Paths;
-// Importamos la sesión para saber a quién cobrarle.
 import jakarta.servlet.http.HttpSession;
 
-// Inyectamos el anotador para encender el nodo de red.
-@RestController
-// Declaramos la clase que administra la distribución del conocimiento.
+// Inyectamos la directiva Controller para que Spring Boot registre esta clase en el ecosistema.
+@Controller
+// Declaramos la clase pública que administra el egreso de datos y las transacciones de descarga.
 public class ControladorDescarga {
 
-    // Escuchamos peticiones GET en la ruta específica de descarga.
+    // Escuchamos peticiones GET dirigidas a la ruta de descarga.
     @GetMapping("/descargar-apunte")
-    // Declaramos el método utilizando el comodín <?> en la respuesta, ya que a veces devolveremos un archivo (Resource) y a veces un texto de error (String).
-    public ResponseEntity<?> procesarDescarga(@RequestParam("archivoDestino") String nombreArchivo, HttpSession sesion) {
+    // Declaramos el método maestro que devuelve un binario o ejecuta una redirección de seguridad.
+    public ResponseEntity<?> procesarDescarga(@RequestParam("idApunte") int idApunte, HttpSession sesion) {
 
-        // 1. VALIDACIÓN DE IDENTIDAD
-        // Preguntamos a la memoria RAM quién está intentando descargar.
+        // 1. VALIDACIÓN DE IDENTIDAD Y SEGURIDAD PERIMETRAL
+        // Extraemos el alias almacenado en la memoria temporal del servidor.
         String aliasUsuario = (String) sesion.getAttribute("usuarioLogueado");
-        // Si es un fantasma o intruso, denegamos el acceso.
+
+        // Evaluamos si el estudiante intentó acceder a una descarga sin haber iniciado sesión.
         if (aliasUsuario == null) {
-            // Retornamos un estado HTTP 401 (No Autorizado) con un mensaje textual.
-            return ResponseEntity.status(401).body("Error: Debes iniciar sesión para descargar.");
-            // Cerramos el control de acceso.
+            // Retornamos un estado HTTP 302 (FOUND) forzando al navegador a volver al índice principal.
+            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/").build();
+            // Cerramos el bloque de validación de seguridad.
         }
 
-        // 2. VALIDACIÓN ECONÓMICA
-        // Traducimos el alias del usuario a su ID numérico interno en la base de datos.
-        int idAutor = UsuarioDAO.obtenerIdPorAlias(aliasUsuario);
-        // Consultamos la bóveda de SQLite para saber exactamente cuántos créditos tiene.
-        int saldoActual = UsuarioDAO.consultarSaldo(idAutor);
+        // Traducimos el alias a la llave primaria de SQLite.
+        int idComprador = UsuarioDAO.obtenerIdPorAlias(aliasUsuario);
 
-        // Invocamos al MotorEconomia para que ejecute su regla de negocio matemática (¿Tiene al menos 5 créditos?).
-        if (!MotorEconomia.puedeDescargar(saldoActual)) {
-            // Si la matemática falla, bloqueamos la transacción y avisamos de la pobreza virtual.
-            return ResponseEntity.status(403).body("Error: Fondos insuficientes. Tienes " + saldoActual + " créditos y necesitas " + MotorEconomia.COSTO_DESCARGA + ".");
-            // Cerramos la barrera de peaje económico.
+        // 2. ORQUESTACIÓN DE LA LÓGICA DE NEGOCIO
+        // Delegamos la validación financiera (créditos y propiedad) al MotorEconomia.
+        boolean transaccionAprobada = MotorEconomia.procesarAdquisicionSegura(idComprador, idApunte);
+
+        // Evaluamos si el MotorEconomia rechazó la transacción por falta de fondos o fraude.
+        if (!transaccionAprobada) {
+            // Ejecutamos una redirección silenciosa al dashboard con un parámetro de error para notificar al usuario.
+            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=transaccion_rechazada").build();
+            // Cerramos el bloque de control financiero.
         }
 
-        // 3. EXTRACCIÓN Y ENTREGA FÍSICA
-        // Abrimos el bloque try-catch porque leer el disco duro es propenso a fallas (ej. archivo borrado accidentalmente).
+        // 3. RECUPERACIÓN Y ENTREGA DEL BINARIO
+        // Obtenemos la metadata del archivo desde el DAO.
+        Apunte documento = ApunteDAO.obtenerPorId(idApunte);
+
+        // CORRECCIÓN DE ALCANCE: Declaramos la variable 'recurso' fuera del bloque try para que sea visible en todo el método.
+        Resource recurso = null;
+
+        // Abrimos bloque de contingencia para la lectura física en el disco duro.
         try {
-            // Construimos la ruta exacta hacia la bóveda donde se guardan los archivos físicos.
-            Path rutaArchivo = Paths.get("repositorio_nur/" + nombreArchivo).normalize();
-            // Empaquetamos la ruta en un objeto Resource que Spring Boot puede enviar por internet.
-            Resource recurso = new UrlResource(rutaArchivo.toUri());
+            // Construimos la ruta absoluta hacia la bóveda de archivos.
+            Path rutaArchivo = Paths.get("repositorio_nur/" + documento.getRutaArchivoFisico()).normalize();
+            // Inicializamos el recurso de red.
+            recurso = new UrlResource(rutaArchivo.toUri());
 
-            // Verificamos si el archivo realmente existe en tu computadora y si se puede leer.
+            // Verificamos si el archivo existe y es legible por la JVM.
             if (recurso.exists() && recurso.isReadable()) {
 
-                // Antes de entregar el archivo, procesamos el cobro invocando al DAO.
-                UsuarioDAO.cobrarCreditos(idAutor, MotorEconomia.COSTO_DESCARGA);
-
-                // Construimos la respuesta HTTP definitiva instruyendo al navegador web a lanzar la ventana de "Guardar como...".
+                // Entregamos el binario forzando la descarga mediante la cabecera CONTENT_DISPOSITION.
                 return ResponseEntity.ok()
-                        // Añadimos el encabezado 'Content-Disposition' forzando la descarga como adjunto (attachment).
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
-                        // Definimos el tipo de contenido como un octeto binario universal.
                         .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        // Inyectamos el archivo crudo en el cuerpo de la respuesta.
                         .body(recurso);
 
-                // Si el archivo fue borrado de tu HP Celeron o está corrupto, abrimos la condición alterna.
+                // Si el archivo falta en el disco físico.
             } else {
-                // Informamos del error 404 de no existencia.
-                return ResponseEntity.status(404).body("Error: El documento físico no existe en el servidor.");
-                // Cerramos la validación de integridad del archivo.
+                // Redirigimos al dashboard informando la pérdida del documento.
+                return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=archivo_perdido").build();
+                // Cerramos la validación de integridad física.
             }
 
-            // Capturamos cualquier desvío crítico de entrada/salida (I/O).
+            // Capturamos cualquier excepción de sistema operativo o de red.
         } catch (Exception e) {
-            // Retornamos un error interno del servidor 500 para ocultar detalles sensibles de la excepción al usuario final.
-            return ResponseEntity.status(500).body("Error interno del servidor al procesar la descarga.");
-            // Cerramos el bloque de contingencia final.
+            // Redirigimos en caso de catástrofe interna del servidor.
+            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=fallo_servidor").build();
+            // Cerramos el bloque de manejo de excepciones.
         }
 
-        // Cerramos el método controlador de transacciones y entregas.
+        // Cerramos el método controlador.
     }
-
-// Cerramos la arquitectura general de la clase.
+// Cerramos la arquitectura definitiva de la clase.
 }

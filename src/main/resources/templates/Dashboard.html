@@ -1,60 +1,281 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plataforma Virtual - Apuntes NUR</title>
-    <link rel="stylesheet" href="/css/estilos.css">
+    <title>Dashboard - Apuntes NUR</title>
+
+    <style>
+        /* Reseteo universal y fondo gris perla muy sutil para resaltar las tarjetas blancas. */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1e293b; display: flex; height: 100vh; overflow: hidden; }
+
+        /* ========================================================================= */
+        /* BARRA LATERAL IZQUIERDA (Menú Principal)                                  */
+        /* ========================================================================= */
+        .sidebar-izquierda { width: 260px; background-color: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; z-index: 10; }
+
+        /* Contenedor del Logo Institucional NUR. */
+        .contenedor-logo { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+        /* Imagen del logo. (Debes colocar un archivo 'logo_nur.png' en tu carpeta src/main/resources/static/img/) */
+        .logo-nur { max-width: 160px; height: auto; }
+        /* Texto de respaldo en caso de que la imagen no cargue. */
+        .logo-texto { font-size: 22px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.5px; }
+
+        /* Botonera de navegación lateral imitando el diseño de la imagen. */
+        .menu-navegacion { display: flex; flex-direction: column; gap: 5px; }
+        .boton-menu { background: transparent; border: none; padding: 15px 20px; border-radius: 8px; text-align: left; font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 10px; }
+        .boton-menu:hover { background-color: #f8fafc; color: #0f172a; }
+        /* Estilo del botón de inicio activo (Azul institucional con fondo celeste claro). */
+        .boton-menu.activo { background-color: #eff6ff; color: #1d4ed8; }
+
+        /* ========================================================================= */
+        /* ÁREA CENTRAL (Contenido Principal Dinámico)                               */
+        /* ========================================================================= */
+        .area-central { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+
+        /* Cabecera superior transparente con el saludo central. */
+        .cabecera-saludo { padding: 40px 40px 20px 40px; text-align: center; }
+        .cabecera-saludo h1 { font-size: 36px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
+        .cabecera-saludo p { font-size: 16px; color: #64748b; }
+
+        /* Contenedor interno con padding para las secciones. */
+        .contenido-interno { padding: 0 40px 40px 40px; max-width: 1000px; margin: 0 auto; width: 100%; }
+
+        /* Títulos de las subsecciones (ej. "Mis Cursos Recientes"). */
+        .titulo-seccion { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; margin-top: 30px; }
+
+        /* Tarjetas horizontales de materias (Simulando los cursos de la imagen). */
+        .grid-materias { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
+        .tarjeta-materia { background: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .tarjeta-materia:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #cbd5e1; }
+        .tarjeta-materia h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 15px; }
+        /* Barra de progreso simulada decorativa de la imagen. */
+        .barra-progreso-fondo { height: 6px; background-color: #f1f5f9; border-radius: 3px; overflow: hidden; margin-bottom: 15px; }
+        .barra-progreso-lleno { height: 100%; background-color: #1d4ed8; width: 40%; border-radius: 3px; }
+        /* Botones de acción amarillos/azules de las tarjetas. */
+        .btn-tarjeta { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #1e293b; display: inline-block; }
+        .tarjeta-materia.activa { border: 2px solid #1d4ed8; }
+
+        /* Lista vertical de apuntes (Simulando "Últimos Apuntes Subidos"). */
+        .lista-apuntes { display: flex; flex-direction: column; gap: 15px; }
+        .fila-apunte { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: 0.2s; }
+        .fila-apunte:hover { border-color: #cbd5e1; background-color: #f8fafc; }
+
+        /* Información izquierda de la fila (Icono + Textos). */
+        .info-apunte { display: flex; align-items: center; gap: 20px; flex: 1; }
+        /* Simulación del cuadro de video/imagen de la captura. */
+        .icono-documento { width: 60px; height: 45px; background-color: #1e3a8a; border-radius: 6px; display: flex; justify-content: center; align-items: center; color: white; font-size: 20px; font-weight: bold; flex-shrink: 0; }
+
+        .texto-apunte h4 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .texto-apunte p { font-size: 13px; color: #64748b; }
+        .texto-apunte a { color: #1d4ed8; text-decoration: none; font-weight: 600; }
+        .texto-apunte a:hover { text-decoration: underline; }
+
+        /* Botón de descarga de la fila. */
+        .btn-descargar-fila { padding: 10px 20px; background-color: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; transition: 0.2s; white-space: nowrap; }
+        .btn-descargar-fila:hover { background-color: #059669; }
+
+        /* ========================================================================= */
+        /* BARRA LATERAL DERECHA (Notificaciones y Sugerencias / Salón de Fama)      */
+        /* ========================================================================= */
+        .sidebar-derecha { width: 320px; background-color: #ffffff; border-left: 1px solid #e2e8f0; padding: 30px 20px; overflow-y: auto; flex-shrink: 0; z-index: 10; }
+
+        /* Perfil superior derecho y billetera. */
+        .perfil-top { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+        .billetera-badge { background: #fef08a; color: #854d0e; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; border: 1px solid #fde047; }
+        .avatar { width: 40px; height: 40px; background-color: #e2e8f0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #64748b; }
+
+        /* Tarjetas del Salón de la Fama (Sugerencias en la imagen). */
+        .tarjeta-ranking { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .medalla { width: 40px; height: 40px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 18px; flex-shrink: 0; }
+        .texto-ranking h5 { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .texto-ranking p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        /* Tarjeta de alerta o Notificaciones. */
+        .tarjeta-notificacion { background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 20px; margin-top: 30px; }
+        .tarjeta-notificacion h4 { color: #92400e; font-size: 15px; margin-bottom: 5px; }
+        .tarjeta-notificacion p { color: #b45309; font-size: 13px; }
+
+        /* Ocultar secciones del SPA. */
+        .seccion-oculta { display: none !important; }
+
+        /* ========================================================================= */
+        /* MEDIA QUERIES (RESPONSIVIDAD MÓVIL)                                       */
+        /* ========================================================================= */
+        @media (max-width: 1024px) {
+            /* En tablets, ocultamos la barra derecha y la mandamos abajo si es necesario. */
+            .sidebar-derecha { display: none; }
+        }
+
+        @media (max-width: 768px) {
+            /* Apilamos todo verticalmente. */
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            /* Convertimos la barra lateral en un menú superior horizontal. */
+            .sidebar-izquierda { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 15px; }
+            .contenedor-logo { margin-bottom: 15px; padding-bottom: 15px; }
+            .menu-navegacion { flex-direction: row; overflow-x: auto; padding-bottom: 5px; }
+            .boton-menu { white-space: nowrap; padding: 10px 15px; }
+            /* Ajustes del área central. */
+            .cabecera-saludo { padding: 30px 20px 10px 20px; }
+            .cabecera-saludo h1 { font-size: 28px; }
+            .contenido-interno { padding: 0 20px 40px 20px; }
+            /* Ajustamos la fila de los apuntes para que el botón baje en pantallas muy chicas. */
+            .fila-apunte { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .btn-descargar-fila { width: 100%; text-align: center; }
+        }
+    </style>
 </head>
-<body class="cuerpo-dashboard">
+<body>
 
-<nav class="barra-navegacion">
-    <h2 class="logo-texto">Apuntes NUR</h2>
-    <div class="info-usuario">
-        <span class="etiqueta-creditos">Mis Créditos: <b id="creditos-actuales">0</b></span>
-        <a href="/static" class="boton-salir">Cerrar Sesión</a>
+<aside class="sidebar-izquierda">
+    <div class="contenedor-logo">
+        <img src="/img/logo_nur.png" alt="Universidad NUR" class="logo-nur" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <span class="logo-texto" style="display:none;">ApuntesNUR</span>
     </div>
-</nav>
 
-<main class="contenedor-principal">
+    <nav class="menu-navegacion">
+        <button class="boton-menu activo" onclick="navegarSPA('seccion-inicio', this)">🏠 Inicio</button>
+        <button class="boton-menu" onclick="navegarSPA('seccion-biblioteca', this)">📚 Mi Biblioteca</button>
+        <a th:href="@{/perfil/{alias}(alias=${alias})}" class="boton-menu" style="text-decoration: none;">👤 Mi Perfil</a>
+        <a href="/" class="boton-menu" style="text-decoration: none; color: #ef4444; margin-top: auto;">🚪 Cerrar Sesión</a>
+    </nav>
+</aside>
 
-    <section class="tarjeta-modulo">
-        <h3>Compartir un Apunte</h3>
-        <p>Sube tus notas en formato PDF o Markdown (.md) y gana créditos virtuales.</p>
+<main class="area-central">
 
-        <form action="/subir-apunte" method="POST" enctype="multipart/form-data" class="formulario-subida">
-            <input type="text" name="tituloApunte" placeholder="Ej: Resumen de Vectores y Matrices" required>
-            <select name="categoriaMateria" required>
-                <option value="" disabled selected>Selecciona la materia...</option>
-                <option value="Algebra">Álgebra Lineal</option>
-                <option value="Fisica">Física y Electricidad</option>
-                <option value="Programacion">Programación Orientada a Objetos</option>
-            </select>
-            <input type="file" name="archivoFisico" accept=".md,.pdf,.docx" required>
-            <button type="submit" class="boton-accion">Subir Documento</button>
-        </form>
-    </section>
+    <header class="cabecera-saludo">
+        <h1 th:text="'¡Hola, ' + ${alias} + '!'">¡Hola, Estudiante!</h1>
+        <p>Tu espacio de conocimiento te espera.</p>
+    </header>
 
-    <hr class="separador">
+    <div class="contenido-interno">
 
-    <section class="tarjeta-modulo">
-        <h3>Tienda de Apuntes</h3>
-        <p>Explora el material de tus compañeros. Cada descarga consume 5 créditos.</p>
+        <div id="seccion-inicio">
 
-        <div class="cuadricula-apuntes">
+            <h2 class="titulo-seccion">Explorar Categorías</h2>
 
-            <article class="apunte-item">
-                <h4>Conceptos de Checkm8</h4>
-                <span class="materia-etiqueta">Sistemas Operativos</span>
-                <p>Autor: <b>lucca_dev</b></p>
-                <p>Valoración: ⭐ 4.8 / 5</p>
-                <button class="boton-descarga">Descargar (-5 Créditos)</button>
-            </article>
+            <div class="grid-materias">
+                <div class="tarjeta-materia activa" onclick="filtrarMateria('Todas', this)">
+                    <h3>Todas las Materias</h3>
+                    <div class="barra-progreso-fondo"><div class="barra-progreso-lleno" style="width: 100%; background-color: #10b981;"></div></div>
+                    <span class="btn-tarjeta">Acceso Total</span>
+                </div>
+                <div class="tarjeta-materia" onclick="filtrarMateria('Programacion', this)">
+                    <h3>Programación</h3>
+                    <div class="barra-progreso-fondo"><div class="barra-progreso-lleno" style="width: 75%;"></div></div>
+                    <span class="btn-tarjeta" style="color: #d97706; border-color: #fde68a; background: #fffbeb;">Filtrar Apuntes</span>
+                </div>
+                <div class="tarjeta-materia" onclick="filtrarMateria('Algebra', this)">
+                    <h3>Álgebra Lineal</h3>
+                    <div class="barra-progreso-fondo"><div class="barra-progreso-lleno" style="width: 40%; background-color: #8b5cf6;"></div></div>
+                    <span class="btn-tarjeta" style="color: #6d28d9; border-color: #ddd6fe; background: #f5f3ff;">Filtrar Apuntes</span>
+                </div>
+            </div>
+
+            <h2 class="titulo-seccion">Últimos Apuntes Subidos</h2>
+
+            <div class="lista-apuntes">
+                <article class="fila-apunte apunte-global" th:each="apunte : ${listaApuntes}" th:data-materia="${apunte.categoria}">
+
+                    <div class="info-apunte">
+                        <div class="icono-documento">📄</div>
+
+                        <div class="texto-apunte">
+                            <h4 th:text="${apunte.titulo}">Resumen Unidad 3</h4>
+                            <p>Por <a th:href="@{/perfil/{autor}(autor=${apunte.aliasAutor})}" th:text="${apunte.aliasAutor}">Carlos Gómez</a> • <span th:text="${apunte.categoria}">Materia</span></p>
+                        </div>
+                    </div>
+
+                    <a th:href="@{/descargar-apunte(archivoDestino=${apunte.rutaArchivoFisico})}" class="btn-descargar-fila">Descargar (-5 Créditos)</a>
+                </article>
+            </div>
 
         </div>
-    </section>
 
+        <div id="seccion-biblioteca" class="seccion-oculta">
+            <h2 class="titulo-seccion">Mi Colección Personal</h2>
+
+            <div th:if="${misApuntes.isEmpty()}" style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
+                No posees archivos en tu biblioteca todavía.
+            </div>
+
+            <div class="lista-apuntes">
+                <article class="fila-apunte" th:each="miApunte : ${misApuntes}">
+                    <div class="info-apunte">
+                        <div class="icono-documento" style="background-color: #475569;">📁</div>
+                        <div class="texto-apunte">
+                            <h4 th:text="${miApunte.titulo}">Archivo Local</h4>
+                            <p>Materia: <span th:text="${miApunte.categoria}">General</span></p>
+                        </div>
+                    </div>
+                    <a th:href="@{/descargar-apunte(archivoDestino=${miApunte.rutaArchivoFisico})}" class="btn-descargar-fila" style="background-color: #64748b;">Descargar Copia</a>
+                </article>
+            </div>
+        </div>
+
+    </div>
 </main>
 
+<aside class="sidebar-derecha">
+
+    <div class="perfil-top">
+        <div class="billetera-badge" th:text="'🪙 ' + ${creditos} + ' Créditos'">🪙 0 Créditos</div>
+        <div class="avatar" th:text="${#strings.substring(alias,0,1).toUpperCase()}">U</div>
+    </div>
+
+    <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 20px;">Salón de la Fama</h3>
+
+    <div class="lista-ranking">
+        <div class="tarjeta-ranking" th:each="lider, iterStat : ${rankingEstudiantes}">
+            <div class="medalla" th:text="'#' + ${iterStat.count}">#1</div>
+            <div class="texto-ranking">
+                <h5 th:text="${lider.alias}">Usuario Top</h5>
+                <p th:text="${lider.creditos} + ' Créditos generados'">1000 Créditos</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tarjeta-notificacion">
+        <h4>🔔 Novedades</h4>
+        <p>Sube material de Cálculo I, es lo más buscado esta semana.</p>
+    </div>
+
+</aside>
+
+<script>
+    // Enrutador de la Single Page Application.
+    function navegarSPA(idSeccionObjetivo, botonPresionado) {
+        // Ocultamos las secciones de contenido (Inicio y Biblioteca).
+        document.getElementById('seccion-inicio').classList.add('seccion-oculta');
+        document.getElementById('seccion-biblioteca').classList.add('seccion-oculta');
+
+        // Mostramos la sección solicitada.
+        document.getElementById(idSeccionObjetivo).classList.remove('seccion-oculta');
+
+        // Actualizamos la botonera lateral.
+        const botones = document.querySelectorAll('.boton-menu');
+        botones.forEach(btn => btn.classList.remove('activo'));
+        botonPresionado.classList.add('activo');
+    }
+
+    // Filtro de las tarjetas superiores (Sustituto funcional de "Mis Cursos").
+    function filtrarMateria(categoriaSeleccionada, tarjetaPresionada) {
+        // Control visual de las tarjetas superiores.
+        const tarjetas = document.querySelectorAll('.tarjeta-materia');
+        tarjetas.forEach(t => t.classList.remove('activa'));
+        tarjetaPresionada.classList.add('activa');
+
+        // Filtrado lógico de las filas en la lista de apuntes.
+        const filasApuntes = document.querySelectorAll('.apunte-global');
+        filasApuntes.forEach(fila => {
+            if (categoriaSeleccionada === 'Todas' || fila.getAttribute('data-materia') === categoriaSeleccionada) {
+                fila.style.display = 'flex';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+</script>
 </body>
 </html>

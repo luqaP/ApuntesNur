@@ -1,128 +1,264 @@
-// Declaramos el paquete estructural al que pertenece esta clase dentro de tu proyecto universitario.
+// Declaramos el paquete estructural para la capa de acceso a datos.
 package bo.edu.nur;
 
-// Importamos la herramienta Connection para mantener el túnel abierto con SQLite.
+// Importamos la interfaz Connection para manejar el tubo hacia SQLite.
 import java.sql.Connection;
-// Importamos PreparedStatement para precompilar las consultas y evitar inyecciones de código SQL malicioso.
+// Importamos PreparedStatement para blindar el código contra inyecciones SQL.
 import java.sql.PreparedStatement;
-// Importamos ResultSet para poder leer y navegar por las filas que nos devuelve la base de datos.
+// Importamos ResultSet para navegar por la tabla virtual que devuelve la base de datos.
 import java.sql.ResultSet;
-// Importamos SQLException para atrapar cualquier colapso físico o de lectura en el disco duro.
+// Importamos SQLException para manejar colapsos del motor relacional.
 import java.sql.SQLException;
-// Importamos la estructura ArrayList para crear listas en la memoria RAM que puedan crecer dinámicamente.
+// Importamos List y ArrayList para empaquetar las filas en colecciones de Java.
 import java.util.ArrayList;
-// Importamos la interfaz List para definir el tipo de colección que enviaremos al controlador.
 import java.util.List;
 
-// Declaramos la clase pública encargada exclusivamente de la lectura y escritura de la tabla Apunte.
+// Declaramos el Data Access Object encargado de la tabla Apunte.
 public class ApunteDAO {
 
-    // ========================================================================================
-    // MÉTODO 1: REGISTRAR UN NUEVO APUNTE EN LA BASE DE DATOS
-    // ========================================================================================
-
-    // Declaramos un método público y estático que recibe un objeto 'Apunte' armado y retorna un boolean (éxito/fracaso).
-    public static boolean registrarApunte(Apunte nuevoApunte) {
-
-        // Redactamos la consulta de inyección SQL definiendo exactamente las cuatro columnas que vamos a llenar.
+    // Método maestro para insertar un nuevo registro en el disco duro.
+    public static boolean registrarApunte(Apunte apunte) {
+        // Redactamos la orden SQL de inserción con parámetros ciegos (?).
         String sql = "INSERT INTO Apunte (titulo, categoria_materia, id_autor, ruta_archivo_fisico) VALUES (?, ?, ?, ?)";
 
-        // Abrimos el bloque try-with-resources para conectar a la base de datos de forma segura y efímera.
+        // Iniciamos el bloque blindado que cerrará la conexión automáticamente al terminar.
         try (Connection conexion = ConexionDB.conectar();
-             // Preparamos la sentencia SQL en el motor para inyectar las variables de forma blindada.
+             // Precompilamos la sentencia en el motor de base de datos.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
 
-            // Inyectamos el título del apunte en el primer comodín leyendo el getter del objeto.
-            declaracion.setString(1, nuevoApunte.getTitulo());
-            // Inyectamos la categoría académica (ej. "Algebra") en el segundo comodín.
-            declaracion.setString(2, nuevoApunte.getCategoria());
-            // Inyectamos el ID numérico del autor en el tercer comodín.
-            declaracion.setInt(3, nuevoApunte.getIdAutor());
-            // Inyectamos la ruta física y el nombre del archivo (con su UUID) en el cuarto comodín.
-            declaracion.setString(4, nuevoApunte.getRutaArchivoFisico());
+            // Inyectamos el título extraído de la RAM al primer parámetro SQL.
+            declaracion.setString(1, apunte.getTitulo());
+            // Inyectamos la taxonomía al segundo parámetro.
+            declaracion.setString(2, apunte.getCategoria());
+            // Inyectamos la llave foránea al tercer parámetro.
+            declaracion.setInt(3, apunte.getIdAutor());
+            // Inyectamos la ruta del binario al cuarto parámetro.
+            declaracion.setString(4, apunte.getRutaArchivoFisico());
 
-            // Ejecutamos la orden de escritura en el disco duro de tu computadora.
-            declaracion.executeUpdate();
+            // Ejecutamos la orden de escritura y verificamos si se afectó al menos una fila.
+            return declaracion.executeUpdate() > 0;
 
-            // Imprimimos una sonda de telemetría en la consola confirmando la persistencia.
-            System.out.println("TELEMETRÍA DAO -> Apunte físico '" + nuevoApunte.getTitulo() + "' registrado en SQLite.");
-
-            // Retornamos verdadero indicando que la operación de guardado fue un éxito absoluto.
-            return true;
-
-            // Capturamos cualquier excepción de base de datos (como disco lleno o archivo bloqueado).
+            // Atrapamos cualquier error físico del disco o de bloqueo de la base de datos.
         } catch (SQLException e) {
-
-            // Registramos el error crítico en la consola roja para depurar sin tumbar el servidor de Tomcat.
-            System.out.println("ERROR DAO -> Fallo al guardar el apunte en SQLite: " + e.getMessage());
-
-            // Retornamos falso para que el controlador sepa que la transacción fracasó y no regale los créditos.
+            // Imprimimos la traza del error en la terminal de diagnóstico.
+            System.out.println("ERROR DAO -> Fallo al insertar el apunte: " + e.getMessage());
+            // Devolvemos falso para notificar el fallo a la capa de servicio.
             return false;
-
-            // Cerramos el bloque de protección arquitectónica.
+            // Cerramos la captura de contingencia.
         }
-
-        // Cerramos el método de registro de apuntes.
+        // Cerramos el método de escritura.
     }
 
     // ========================================================================================
-    // MÉTODO 2: EXTRAER EL CATÁLOGO COMPLETO PARA LA TIENDA VISUAL
+    // MÉTODO 2: EXTRAER EL CATÁLOGO COMPLETO MEDIANTE ÁLGEBRA RELACIONAL (CORREGIDO)
     // ========================================================================================
 
-    // Definimos el método público y estático que retornará la Lista estructurada de objetos para Thymeleaf.
+    // Método estático maestro para extraer la biblioteca global inyectando el alias de los creadores.
     public static List<Apunte> obtenerTodosLosApuntes() {
+        // Reservamos espacio en la memoria RAM para la colección dinámica de objetos.
+        List<Apunte> lista = new ArrayList<>();
 
-        // Instanciamos una lista vacía en la memoria RAM para ir apilando los documentos que encontremos.
-        List<Apunte> listaCatalogo = new ArrayList<>();
+        // REDACCIÓN CRÍTICA (BUG FIX):
+        // Realizamos un INNER JOIN entre Apunte (a) y Usuario (u).
+        // Extraemos todas las columnas de Apunte (a.*) y ÚNICAMENTE la columna 'nombre_usuario' de Usuario.
+        // Anteriormente pedíamos 'u.alias', lo cual provocaba un colapso físico por inexistencia.
+        String sql = "SELECT a.*, u.nombre_usuario FROM Apunte a INNER JOIN Usuario u ON a.id_autor = u.id_usuario";
 
-        // Redactamos la consulta SQL de lectura para traer absolutamente todas las filas.
-        String sql = "SELECT * FROM Apunte";
-
-        // Abrimos el túnel seguro hacia la bóveda de SQLite usando un bloque autolimpiable.
+        // Abrimos el conducto temporal hacia el archivo físico .db.
         try (Connection conexion = ConexionDB.conectar();
-             // Preparamos la sentencia SQL de lectura.
+             // Precompilamos la consulta masiva.
              PreparedStatement declaracion = conexion.prepareStatement(sql);
-             // Ejecutamos la consulta inmediatamente y capturamos todos los registros resultantes.
+             // Ejecutamos la lectura y volcamos el disco duro en el cursor de memoria.
              ResultSet resultados = declaracion.executeQuery()) {
 
-            // Iniciamos un bucle repetitivo (while) que avanzará fila por fila.
+            // Iteramos fila por fila mientras el cursor detecte registros.
             while (resultados.next()) {
-
-                // Extraemos el título del documento leyendo la columna textual.
+                // Mapeamos la llave primaria del documento.
+                int id = resultados.getInt("id_apunte");
+                // Mapeamos el título comercial del documento.
                 String titulo = resultados.getString("titulo");
-                // Extraemos la categoría académica desde la fila actual.
+                // Mapeamos la taxonomía académica.
                 String categoria = resultados.getString("categoria_materia");
-                // Extraemos el ID numérico del estudiante que lo subió.
+                // Mapeamos el ID foráneo del autor.
                 int idAutor = resultados.getInt("id_autor");
-                // Extraemos la ruta física completa guardada en disco.
-                String rutaCompleta = resultados.getString("ruta_archivo_fisico");
+                // Mapeamos la ruta física, purgando el nombre del directorio para facilitar el trabajo a Thymeleaf.
+                String ruta = resultados.getString("ruta_archivo_fisico").replace("repositorio_nur/", "");
 
-                // Limpiamos la ruta removiendo la etiqueta de la carpeta para dejar exclusivamente el nombre del archivo.
-                String nombreArchivo = rutaCompleta.replace("repositorio_nur/", "");
+                // EXTRACCIÓN JOIN CORREGIDA: Rescatamos el nombre de usuario desde la columna física real 'nombre_usuario'.
+                String aliasRecuperado = resultados.getString("nombre_usuario");
 
-                // Instanciamos un nuevo objeto Apunte en la RAM usando el constructor con los datos extraídos.
-                Apunte apunteRecuperado = new Apunte(titulo, categoria, idAutor, nombreArchivo);
+                // Instanciamos el objeto con el constructor ORM actualizado de 6 parámetros.
+                Apunte apunte = new Apunte(id, titulo, categoria, idAutor, ruta, aliasRecuperado);
 
-                // Inyectamos este objeto armado al final de nuestra lista maestra.
-                listaCatalogo.add(apunteRecuperado);
-
-                // Cerramos el bucle de recolección de filas.
+                // Sumamos la entidad armada a la lista que enviaremos al controlador.
+                lista.add(apunte);
+                // Cerramos el bucle repetitivo de mapeo.
             }
 
-            // Capturamos cualquier colapso de lectura en el archivo .db.
+            // Atrapamos excepciones de lectura física en el disco.
         } catch (SQLException e) {
+            // Notificamos el colapso a la consola de IntelliJ sin detener abruptamente Tomcat.
+            System.out.println("ERROR DAO -> Fallo masivo al cargar apuntes JOIN: " + e.getMessage());
+            // Cerramos el control de excepciones.
+        }
 
-            // Imprimimos el error crítico en la consola para alertarnos de la falla.
-            System.out.println("ERROR DAO -> Fallo masivo al cargar el catálogo de apuntes: " + e.getMessage());
+        // Retornamos el cargamento de apuntes al ControladorDashboard.
+        return lista;
+        // Cerramos el método de extracción masiva.
+    }
 
+    // NUEVO MÉTODO MAESTRO: Extrae únicamente la biblioteca personal de un estudiante específico.
+    public static List<Apunte> obtenerApuntesPorAutor(int idAutorBusqueda) {
+        // Inicializamos la colección receptora.
+        List<Apunte> lista = new ArrayList<>();
+        // Redactamos la consulta condicionando la búsqueda a la llave foránea.
+        String sql = "SELECT * FROM Apunte WHERE id_autor = ?";
+
+        // Abrimos la sesión de base de datos.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia con el filtro.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el ID del autor al filtro de seguridad.
+            declaracion.setInt(1, idAutorBusqueda);
+
+            // Ejecutamos la búsqueda de alta precisión.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Recorremos los impactos confirmados.
+                while (resultados.next()) {
+                    // Mapeamos ID.
+                    int id = resultados.getInt("id_apunte");
+                    // Mapeamos título.
+                    String titulo = resultados.getString("titulo");
+                    // Mapeamos categoría.
+                    String categoria = resultados.getString("categoria_materia");
+                    // Mapeamos autor numérico.
+                    int idAutor = resultados.getInt("id_autor");
+                    // Mapeamos ruta.
+                    String ruta = resultados.getString("ruta_archivo_fisico").replace("repositorio_nur/", "");
+
+                    // Ensamblamos la entidad (enviamos el alias como desconocido porque en esta vista no es necesario redundar).
+                    Apunte apunte = new Apunte(id, titulo, categoria, idAutor, ruta, "Mi Perfil");
+                    // Añadimos a la colección.
+                    lista.add(apunte);
+                    // Cerramos el bucle.
+                }
+                // Anulamos el ResultSet de la RAM.
+            }
+            // Atrapamos el error.
+        } catch (SQLException e) {
+            // Notificamos a la consola.
+            System.out.println("ERROR DAO -> Fallo al buscar apuntes por autor: " + e.getMessage());
+            // Cerramos el atrapador.
+        }
+        // Devolvemos la biblioteca purificada.
+        return lista;
+        // Cerramos el método de extracción personal.
+    }
+
+    // Método inalterado para extraer la metadata de un solo archivo para procesar su descarga.
+    public static Apunte obtenerPorId(int idApunteBusqueda) {
+        // Redactamos la consulta con llave primaria.
+        String sql = "SELECT * FROM Apunte WHERE id_apunte = ?";
+        // Iniciamos el conducto.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos instrucción.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+            // Filtramos por ID.
+            declaracion.setInt(1, idApunteBusqueda);
+            // Ejecutamos.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si existe el archivo.
+                if (resultados.next()) {
+                    // Reconstruimos la fila en un objeto.
+                    return new Apunte(
+                            resultados.getInt("id_apunte"),
+                            resultados.getString("titulo"),
+                            resultados.getString("categoria_materia"),
+                            resultados.getInt("id_autor"),
+                            resultados.getString("ruta_archivo_fisico"),
+                            "Sistema"
+                    );
+                    // Cerramos condicional.
+                }
+                // Liberamos recursos.
+            }
+            // Atrapamos excepción.
+        } catch (SQLException e) {
+            // Reportamos.
+            System.out.println("ERROR DAO -> Fallo al buscar apunte por ID: " + e.getMessage());
+            // Cerramos catch.
+        }
+        // Retornamos nulo si alguien inventó un ID.
+        return null;
+        // Cerramos método exacto.
+    }
+    // ========================================================================================
+    // MÉTODOS FINANCIEROS Y DE DERECHOS DE PROPIEDAD (TRANSACCIONES)
+    // ========================================================================================
+
+    // Método estático que verifica en el libro mayor si un estudiante ya posee los derechos de un documento.
+    public static boolean verificarAdquisicion(int idComprador, int idApunte) {
+        // Redactamos la consulta condicionada buscando una fila en la tabla intermedia que cruce ambos IDs.
+        // Asumimos que tu tabla de unión se llama 'Adquisicion' (si se llama distinto en InstaladorDB, cámbialo aquí).
+        String sql = "SELECT 1 FROM Adquisicion WHERE id_usuario = ? AND id_apunte = ?";
+
+        // Iniciamos el conducto blindado hacia el archivo SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia para evitar inyecciones de código.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el ID del estudiante en la primera incógnita.
+            declaracion.setInt(1, idComprador);
+            // Inyectamos el ID del documento en la segunda incógnita.
+            declaracion.setInt(2, idApunte);
+
+            // Disparamos la lectura hacia el disco duro.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si el cursor avanza al menos una vez, significa que el recibo de compra existe.
+                return resultados.next();
+                // Cerramos la manipulación del cursor de memoria.
+            }
+
+            // Atrapamos cualquier colapso de comunicación con el archivo de base de datos.
+        } catch (SQLException e) {
+            // Documentamos el error técnico en la terminal de tu entorno de desarrollo.
+            System.out.println("ERROR DAO -> Fallo al verificar la adquisición en el libro mayor: " + e.getMessage());
             // Cerramos el bloque de contingencia.
         }
 
-        // Retornamos la lista completa al ControladorDashboard.
-        return listaCatalogo;
-
-        // Cerramos el método de extracción del catálogo.
+        // Si hay un fallo crítico, devolvemos falso por defecto para proteger la propiedad intelectual.
+        return false;
+        // Cerramos el auditor de adquisiciones.
     }
 
-// Cerramos la arquitectura completa de la clase ApunteDAO.
+    // Método estático que inscribe permanentemente los derechos de descarga en la base de datos tras un pago exitoso.
+    public static boolean registrarAdquisicion(int idComprador, int idApunte) {
+        // Redactamos la sentencia de inserción para crear un nuevo recibo en la tabla intermedia.
+        String sql = "INSERT INTO Adquisicion (id_usuario, id_apunte) VALUES (?, ?)";
+
+        // Iniciamos la sesión transaccional con tu base de datos local.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos el inyector SQL.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos el ID numérico del comprador extraído de la memoria RAM.
+            declaracion.setInt(1, idComprador);
+            // Asignamos el ID del apunte adquirido.
+            declaracion.setInt(2, idApunte);
+
+            // Ejecutamos la orden de escritura y validamos si se alteró exitosamente una fila en el disco.
+            return declaracion.executeUpdate() > 0;
+
+            // Capturamos violaciones de integridad estructural (ej. intentar registrar la misma compra dos veces).
+        } catch (SQLException e) {
+            // Registramos la colisión en la terminal para fines de auditoría.
+            System.out.println("ERROR DAO -> Fallo al registrar la nueva adquisición: " + e.getMessage());
+            // Devolvemos falso para que el MotorEconomia sepa que el proceso físico fracasó.
+            return false;
+            // Cerramos la captura de errores.
+        }
+        // Cerramos el notario de adquisiciones.
+    }
+// Cerramos la clase completa.
 }

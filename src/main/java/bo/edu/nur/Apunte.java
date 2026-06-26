@@ -1,104 +1,138 @@
-// Declaramos el paquete estructural al que pertenece este modelo dentro de tu proyecto universitario.
+// Declaramos el paquete estructural que contiene las entidades de la base de datos.
 package bo.edu.nur;
 
-// Declaramos la clase pública que servirá como el molde matemático para empaquetar los datos de la base de datos a la memoria RAM.
+// Declaramos la clase pública que actúa como el molde para los documentos del sistema.
 public class Apunte {
 
-    // Declaramos el atributo privado que almacenará el nombre del documento (ej. "Resumen de Matrices").
+    // Identificador único y llave primaria del apunte en SQLite.
+    private int idApunte;
+    // Cadena de texto que almacena el nombre comercial del documento.
     private String titulo;
-    // Declaramos el atributo privado para clasificar académicamente el documento (ej. "Algebra").
+    // Rama académica a la que pertenece (Ej: Programacion, Algebra).
     private String categoria;
-    // Declaramos el atributo numérico privado que guarda la clave foránea del estudiante que subió el archivo.
+    // Llave foránea numérica que enlaza con la tabla Usuario.
     private int idAutor;
-    // Declaramos el atributo privado que contiene la ruta exacta en tu disco duro o el nombre único (ej. "550e_archivo.md").
+    // Ruta encriptada y absoluta hacia el binario en el disco duro.
     private String rutaArchivoFisico;
+    // NUEVO: Atributo transitorio para almacenar en RAM el nombre del autor extraído vía SQL.
+    private String aliasAutor;
 
-    // Declaramos el constructor público estricto que exige los cuatro parámetros para instanciar el objeto correctamente.
+    // Constructor maestro para cuando extraemos un apunte completo desde SQLite (con ID y Alias).
+    public Apunte(int idApunte, String titulo, String categoria, int idAutor, String rutaArchivoFisico, String aliasAutor) {
+        // Asignamos el ID primario.
+        this.idApunte = idApunte;
+        // Asignamos el título.
+        this.titulo = titulo;
+        // Asignamos la taxonomía académica.
+        this.categoria = categoria;
+        // Asignamos el ID numérico del creador.
+        this.idAutor = idAutor;
+        // Asignamos la ruta de descarga.
+        this.rutaArchivoFisico = rutaArchivoFisico;
+        // Asignamos el nombre de usuario textual.
+        this.aliasAutor = aliasAutor;
+        // Cerramos el constructor de extracción.
+    }
+
+    // Constructor transaccional para cuando el estudiante recién sube el apunte (aún no tiene ID de BD).
     public Apunte(String titulo, String categoria, int idAutor, String rutaArchivoFisico) {
-
-        // Asignamos el valor del parámetro 'titulo' recibido al atributo encapsulado de esta clase (this).
+        // Asignamos un 0 temporal mientras SQLite le asigna un número real.
+        this.idApunte = 0;
+        // Asignamos el título digitado en el formulario.
         this.titulo = titulo;
-        // Asignamos el valor del parámetro 'categoria' al atributo interno de la clase.
+        // Asignamos la materia seleccionada.
         this.categoria = categoria;
-        // Vinculamos el ID numérico del autor al objeto en la memoria RAM.
+        // Asignamos el ID numérico extraído de la sesión.
         this.idAutor = idAutor;
-        // Guardamos la ruta del archivo para que Thymeleaf y el Controlador de Descargas sepan qué entregar.
+        // Asignamos la ruta física recién generada con el UUID.
         this.rutaArchivoFisico = rutaArchivoFisico;
-
-        // Cerramos el bloque del constructor estructurado.
+        // Inicializamos el alias como desconocido hasta que se haga una consulta relacional.
+        this.aliasAutor = "Desconocido";
+        // Cerramos el constructor de inserción.
     }
 
-    // Declaramos el método público getter para extraer el título del objeto desde otras clases.
+    // Método de acceso para extraer el ID primario.
+    public int getIdApunte() {
+        // Devolvemos el valor numérico.
+        return idApunte;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar el ID primario.
+    public void setIdApunte(int idApunte) {
+        // Sobrescribimos el valor de la memoria.
+        this.idApunte = idApunte;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer el título.
     public String getTitulo() {
-
-        // Retornamos el valor almacenado en el atributo 'titulo'.
+        // Devolvemos el texto.
         return titulo;
-
-        // Cerramos el método getter.
+        // Cerramos el getter.
     }
 
-    // Declaramos el método público setter por si necesitamos modificar el título de forma dinámica en el futuro.
+    // Método de acceso para inyectar el título.
     public void setTitulo(String titulo) {
-
-        // Reemplazamos el título actual en la memoria por el nuevo valor recibido.
+        // Sobrescribimos el título.
         this.titulo = titulo;
-
-        // Cerramos el método setter.
+        // Cerramos el setter.
     }
 
-    // Declaramos el método público getter para extraer la materia académica.
+    // Método de acceso para extraer la materia.
     public String getCategoria() {
-
-        // Retornamos la categoría almacenada.
+        // Devolvemos la rama académica.
         return categoria;
-
-        // Cerramos el getter de categoría.
+        // Cerramos el getter.
     }
 
-    // Declaramos el método setter para sobreescribir la categoría académica.
+    // Método de acceso para inyectar la materia.
     public void setCategoria(String categoria) {
-
-        // Actualizamos la categoría con el parámetro inyectado.
+        // Sobrescribimos la categoría.
         this.categoria = categoria;
-
-        // Cerramos el setter de categoría.
+        // Cerramos el setter.
     }
 
-    // Declaramos el método getter para obtener el ID numérico de quien subió el archivo a la plataforma.
+    // Método de acceso para extraer la llave foránea del autor.
     public int getIdAutor() {
-
-        // Retornamos la clave foránea del usuario creador.
+        // Devolvemos el ID relacional.
         return idAutor;
-
-        // Cerramos el getter del ID de autor.
+        // Cerramos el getter.
     }
 
-    // Declaramos el método setter para modificar la autoría del apunte en caso de correcciones en la base de datos.
+    // Método de acceso para inyectar la llave foránea.
     public void setIdAutor(int idAutor) {
-
-        // Actualizamos el atributo numérico del ID en el objeto.
+        // Sobrescribimos el enlace relacional.
         this.idAutor = idAutor;
-
-        // Cerramos el setter de autoría.
+        // Cerramos el setter.
     }
 
-    // Declaramos el método getter vital para obtener la ruta del archivo físico, usado intensivamente por Thymeleaf.
+    // Método de acceso para extraer la ubicación física del archivo.
     public String getRutaArchivoFisico() {
-
-        // Retornamos la ruta o nombre del archivo necesario para el proceso de enlace de descarga.
+        // Devolvemos la ruta local.
         return rutaArchivoFisico;
-
-        // Cerramos el getter de la ruta.
+        // Cerramos el getter.
     }
 
-    // Declaramos el método setter para actualizar la ruta física en caso de renombrar o mover el archivo en Windows.
+    // Método de acceso para inyectar la ruta física.
     public void setRutaArchivoFisico(String rutaArchivoFisico) {
-
-        // Reasignamos el atributo de la ruta del archivo en el servidor.
+        // Sobrescribimos la ruta.
         this.rutaArchivoFisico = rutaArchivoFisico;
-
-        // Cerramos el setter de la ruta física.
+        // Cerramos el setter.
     }
 
-// Cerramos la estructura general y arquitectónica de la clase Apunte.
+    // Método de acceso para extraer el nombre en texto del autor (usado por Thymeleaf).
+    public String getAliasAutor() {
+        // Devolvemos el alias.
+        return aliasAutor;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar el alias desde una consulta SQL con JOIN.
+    public void setAliasAutor(String aliasAutor) {
+        // Sobrescribimos el texto del autor.
+        this.aliasAutor = aliasAutor;
+        // Cerramos el setter.
+    }
+// Cerramos la clase modelo.
 }

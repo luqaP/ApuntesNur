@@ -1,184 +1,295 @@
-// Declaramos el paquete para que Spring Boot lo encuentre sin problemas.
+// Declaramos la pertenencia estricta de la clase al paquete de nuestro proyecto universitario.
 package bo.edu.nur;
 
-// Importamos la conexión nativa a la base de datos.
+// Importamos la interfaz nativa para manejar la conexión abierta con SQLite.
 import java.sql.Connection;
-// Importamos la clase para enviar consultas seguras.
+// Importamos PreparedStatement para precompilar las consultas y blindarnos contra inyecciones SQL.
 import java.sql.PreparedStatement;
-// Importamos ResultSet para poder leer las respuestas del SELECT.
+// Importamos ResultSet para navegar por las tablas virtuales que devuelve la base de datos.
 import java.sql.ResultSet;
-// Importamos la clase para manejar errores físicos del archivo.
+// Importamos SQLException para atrapar los fallos de lectura y escritura en el disco duro.
 import java.sql.SQLException;
 
-// Declaramos la clase que administra la tabla Usuario en SQLite.
+// Declaramos la clase pública que actuará como el único intermediario entre Java y la tabla Usuario de SQLite.
 public class UsuarioDAO {
 
-    // -------------------------------------------------------------------------
-    // MÉTODO 1: Para guardar un usuario nuevo (El que ya teníamos)
-    // -------------------------------------------------------------------------
+    // ========================================================================================
+    // MÉTODO 1: REGISTRO DE NUEVOS ESTUDIANTES
+    // ========================================================================================
+
+    // Método estático para insertar un estudiante nuevo en la base de datos.
     public static boolean registrarUsuario(Usuario nuevoUsuario) {
+        // Redactamos la instrucción SQL inyectando datos en todas las columnas definidas.
         String sql = "INSERT INTO Usuario (nombre_usuario, nombre_completo, numero_credencial, contrasena, creditos_virtuales, racha_diaria, fecha_ultimo_acceso) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
+        // Abrimos el túnel blindado hacia el archivo de SQLite.
         try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la sentencia en el motor.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
 
-            declaracion.setString(1, nuevoUsuario.obtenerNombreUsuario());
+            // Inyectamos el alias.
+            declaracion.setString(1, nuevoUsuario.getAlias());
+            // Inyectamos el nombre real.
             declaracion.setString(2, nuevoUsuario.obtenerNombreCompleto());
+            // Inyectamos la matrícula institucional.
             declaracion.setString(3, nuevoUsuario.obtenerNumeroCredencial());
+            // Inyectamos el hash criptográfico Bcrypt.
             declaracion.setString(4, nuevoUsuario.obtenerContrasena());
-            declaracion.setInt(5, nuevoUsuario.obtenerCreditos());
+            // Inyectamos el capital semilla.
+            declaracion.setInt(5, nuevoUsuario.getCreditos());
+            // Inyectamos el contador de ingresos.
             declaracion.setInt(6, nuevoUsuario.obtenerRachaDiaria());
+            // Inyectamos la estampa temporal inicial.
             declaracion.setString(7, nuevoUsuario.obtenerFechaUltimoAccesoComoTexto());
 
+            // Ejecutamos la orden de inserción física.
             declaracion.executeUpdate();
-            System.out.println("Estudiante insertado exitosamente en la base de datos.");
+            // Avisamos al programador del éxito de la transacción.
+            System.out.println("TELEMETRÍA DAO -> Estudiante registrado exitosamente.");
+            // Devolvemos verdadero a la capa de servicio.
             return true;
 
+            // Atrapamos colisiones de I/O (ejemplo: alias ya registrado por otro usuario).
         } catch (SQLException e) {
-            System.out.println("Error crítico al registrar: " + e.getMessage());
+            // Imprimimos la traza del error crítico.
+            System.out.println("ERROR DAO -> Fallo crítico al registrar: " + e.getMessage());
+            // Devolvemos falso para notificar el fracaso.
             return false;
+            // Cerramos el bloque de contingencia.
         }
+        // Cerramos el método de inserción.
     }
 
-    // -------------------------------------------------------------------------
-    // MÉTODO 2: Para validar el inicio de sesión (El que te faltaba)
-    // -------------------------------------------------------------------------
-    public static boolean validarCredenciales(String alias, String claveCruda) { // Recibimos las credenciales de entrada desde la pantalla web.
-        String sql = "SELECT contrasena FROM Usuario WHERE nombre_usuario = ?"; // Preparamos la consulta orientada exclusivamente a la columna de seguridad.
-        try (Connection conexion = ConexionDB.conectar(); // Abrimos el túnel de comunicación con la base de datos SQLite.
-             PreparedStatement declaracion = conexion.prepareStatement(sql)) { // Preparamos la estructura de la sentencia para mitigar inyecciones SQL.
-            declaracion.setString(1, alias); // Vinculamos el alias recibido al primer comodín de la consulta de lectura.
-            try (java.sql.ResultSet resultados = declaracion.executeQuery()) { // Ejecutamos la lectura en el disco duro y abrimos el cursor de datos.
-                if (resultados.next()) { // Evaluamos si el cursor encontró una fila que coincida con el nombre de usuario.
-                    String hashGuardado = resultados.getString("contrasena"); // Extraemos la cadena de 60 caracteres criptográficos de la columna.
-                    // COMPROBACIÓN: jBCrypt decodifica el salt y compara matemáticamente ambos valores en milisegundos.
-                    return org.mindrot.jbcrypt.BCrypt.checkpw(claveCruda, hashGuardado); // Retorna verdadero si coinciden, falso de lo contrario.
-                } // Cerramos el bloque condicional del registro encontrado.
-            } // Cerramos automáticamente el ResultSet para liberar memoria RAM.
-        } catch (SQLException e) { // Capturamos cualquier colapso o excepción de conectividad con SQLite.
-            System.out.println("Error crítico en la validación criptográfica: " + e.getMessage()); // Registramos la falla detallada en la consola de IntelliJ.
-        } // Cerramos el bloque de contingencia de errores.
-        return false; // Retornamos falso por defecto si las contraseñas no coinciden o si el proceso falló.
-    } // Cerramos el método de validación de credenciales.
-    // -------------------------------------------------------------------------
-    // MÉTODO 3: Extraer el ID numérico a partir del nombre de usuario.
-    // -------------------------------------------------------------------------
-    public static int obtenerIdPorAlias(String alias) {
-        // Redactamos la consulta SQL para traer exclusivamente la columna id_usuario.
-        String sql = "SELECT id_usuario FROM Usuario WHERE nombre_usuario = ?";
-        // Abrimos la conexión física con la base de datos de manera segura.
+    // ========================================================================================
+    // MÉTODO 2: VALIDACIÓN DE ACCESO (LOGIN CRIPTOGRÁFICO)
+    // ========================================================================================
+
+    // Método estático que evalúa si un usuario tiene permiso de entrar al sistema.
+    public static boolean validarCredenciales(String alias, String claveCruda) {
+        // Buscamos exclusivamente el hash protegido basándonos en el alias ingresado.
+        String sql = "SELECT contrasena FROM Usuario WHERE nombre_usuario = ?";
+
+        // Abrimos la sesión con la base de datos.
         try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la búsqueda.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
-            // Reemplazamos el comodín con el alias extraído de la sesión web.
+
+            // Inyectamos el alias tecleado en el navegador.
             declaracion.setString(1, alias);
-            // Ejecutamos la lectura y guardamos el resultado en la memoria virtual (ResultSet).
-            try (java.sql.ResultSet resultados = declaracion.executeQuery()) {
-                // Si encontramos una coincidencia, extraemos y retornamos el número entero.
+
+            // Ejecutamos la lectura del disco.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si la fila del estudiante existe en SQLite.
                 if (resultados.next()) {
-                    // Retornamos el valor numérico exacto de la llave primaria.
-                    return resultados.getInt("id_usuario");
-                    // Cerramos el bloque condicional.
+                    // Extraemos la cadena de 60 caracteres que conforma el hash guardado.
+                    String hashGuardado = resultados.getString("contrasena");
+                    // Ejecutamos la matemática inversa de jBCrypt para verificar la coincidencia.
+                    return org.mindrot.jbcrypt.BCrypt.checkpw(claveCruda, hashGuardado);
+                    // Cerramos el bloque de evaluación de fila.
                 }
-                // Cerramos el bloque del ResultSet.
+                // Anulamos la memoria del lector de resultados.
             }
-            // Capturamos cualquier falla en la lectura del archivo SQLite.
+            // Atrapamos fallos estructurales de SQL.
         } catch (SQLException e) {
-            // Imprimimos el error crítico para el desarrollador.
-            System.out.println("Error al buscar ID: " + e.getMessage());
-            // Cerramos el bloque de excepciones.
+            // Informamos de la vulnerabilidad en consola.
+            System.out.println("ERROR DAO -> Falla en la validación criptográfica: " + e.getMessage());
+            // Cerramos el bloque protector.
         }
-        // Retornamos -1 como señal de error si el usuario no existe en la base de datos.
-        return -1;
-        // Cerramos el método de extracción de ID.
+        // Retornamos falso automáticamente si el proceso falla o si las claves no coinciden.
+        return false;
+        // Cerramos el validador de seguridad.
     }
 
+    // ========================================================================================
+    // MÉTODO 3: TRADUCTOR DE IDENTIDAD (ALIAS -> ID)
+    // ========================================================================================
 
-    // -------------------------------------------------------------------------
-    // MÉTODO 4: Inyectar créditos virtuales como recompensa.
-    // -------------------------------------------------------------------------
-    public static void sumarCreditos(int idUsuario, int cantidad) {
-        // Redactamos una consulta de actualización (UPDATE) matemática para sumar el valor directamente en el motor de la base de datos.
-        String sql = "UPDATE Usuario SET creditos_virtuales = creditos_virtuales + ? WHERE id_usuario = ?";
-        // Abrimos el túnel de comunicación y preparamos la sentencia.
+    // Método estático para descubrir la llave primaria de un usuario conociendo solo su nombre.
+    public static int obtenerIdPorAlias(String alias) {
+        // Instruimos a SQLite a retornar únicamente el número de la columna id_usuario.
+        String sql = "SELECT id_usuario FROM Usuario WHERE nombre_usuario = ?";
+
+        // Conectamos a la base de forma efímera.
         try (Connection conexion = ConexionDB.conectar();
+             // Aseguramos la instrucción.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
-            // Inyectamos la cantidad de créditos a sumar (ej. 10).
-            declaracion.setInt(1, cantidad);
-            // Inyectamos el identificador del estudiante que recibirá el premio.
-            declaracion.setInt(2, idUsuario);
-            // Ejecutamos la orden de escritura y actualización en el disco duro.
-            declaracion.executeUpdate();
-            // Capturamos cualquier colapso de escritura.
+
+            // Inyectamos el alias a traducir.
+            declaracion.setString(1, alias);
+
+            // Llevamos a cabo la extracción.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si detectamos al usuario.
+                if (resultados.next()) {
+                    // Entregamos la llave primaria en formato entero primitivo.
+                    return resultados.getInt("id_usuario");
+                    // Cerramos el condicional de impacto.
+                }
+                // Liberamos recursos de lectura.
+            }
+            // Capturamos violaciones de lectura.
         } catch (SQLException e) {
-            // Registramos la falla si la transacción económica fracasa.
-            System.out.println("Error al sumar créditos: " + e.getMessage());
-            // Cerramos el manejador de errores.
+            // Documentamos el fallo.
+            System.out.println("ERROR DAO -> Falla al traducir ID por Alias: " + e.getMessage());
+            // Cerramos la captura.
         }
-        // Cerramos el método de recompensa económica.
+        // Si el usuario no existe, retornamos un número negativo y absurdo para alertar al sistema.
+        return -1;
+        // Cerramos el método traductor.
     }
-    // -------------------------------------------------------------------------
-    // MÉTODO 5: Consultar la billetera virtual del estudiante.
-    // -------------------------------------------------------------------------
+
+    // ========================================================================================
+    // MÉTODO 4: OBTENER PERFIL COMPLETO (EL MÉTODO CORREGIDO)
+    // ========================================================================================
+
+    // Método estático que mapea absolutamente todos los datos de un estudiante de SQLite a Java.
+    public static Usuario obtenerPorAlias(String aliasBusqueda) {
+        // Solicitamos toda la fila que pertenezca al nombre de usuario indicado.
+        String sql = "SELECT * FROM Usuario WHERE nombre_usuario = ?";
+
+        // Iniciamos la transacción de lectura.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos para neutralizar ataques.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos el alias provisto por el controlador.
+            declaracion.setString(1, aliasBusqueda);
+
+            // Ejecutamos el barrido del disco.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si la consulta arroja una fila válida.
+                if (resultados.next()) {
+                    // Instanciamos el objeto orquestador con el constructor de 8 parámetros.
+                    return new Usuario(
+                            // Mapeo 1: Identificador absoluto.
+                            resultados.getInt("id_usuario"),
+                            // Mapeo 2: Alias de la cuenta.
+                            resultados.getString("nombre_usuario"),
+                            // Mapeo 3: Nombre legal.
+                            resultados.getString("nombre_completo"),
+                            // Mapeo 4: Matrícula universitaria.
+                            resultados.getString("numero_credencial"),
+                            // Mapeo 5: Clave cifrada.
+                            resultados.getString("contrasena"),
+                            // Mapeo 6: Saldo de créditos.
+                            resultados.getInt("creditos_virtuales"),
+                            // Mapeo 7: Racha consecutiva.
+                            resultados.getInt("racha_diaria"),
+                            // Mapeo 8: Fecha de última visita.
+                            resultados.getString("fecha_ultimo_acceso")
+                    );
+                    // Cerramos el proceso de mapeo objeto-relacional.
+                }
+                // Cerramos el cursor temporal.
+            }
+            // Atrapamos caídas de hardware o bloqueos lógicos.
+        } catch (SQLException e) {
+            // Imprimimos el diagnóstico de la lectura completa.
+            System.out.println("ERROR DAO -> Fallo al extraer el perfil absoluto: " + e.getMessage());
+            // Cerramos el control de excepciones.
+        }
+        // Retornamos ausencia de memoria si el estudiante no reside en la base de datos.
+        return null;
+        // Cerramos el buscador exhaustivo de perfiles.
+    }
+
+    // ========================================================================================
+    // MÉTODO 5: INYECCIÓN DE RECOMPENSAS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático que aplica un incremento matemático a la billetera.
+    public static void sumarCreditos(int idUsuario, int cantidad) {
+        // Redactamos una instrucción UPDATE para que el motor de SQL haga la matemática nativamente.
+        String sql = "UPDATE Usuario SET creditos_virtuales = creditos_virtuales + ? WHERE id_usuario = ?";
+
+        // Abrimos la sesión financiera.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos el inyector.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el bono a acreditar.
+            declaracion.setInt(1, cantidad);
+            // Inyectamos al beneficiario.
+            declaracion.setInt(2, idUsuario);
+            // Ejecutamos la orden de alteración física.
+            declaracion.executeUpdate();
+
+            // Atrapamos violaciones de concurrencia.
+        } catch (SQLException e) {
+            // Registramos el error de inyección de capital.
+            System.out.println("ERROR DAO -> Imposible inyectar créditos: " + e.getMessage());
+            // Cerramos la captura.
+        }
+        // Cerramos el dispensador de recompensas.
+    }
+
+    // ========================================================================================
+    // MÉTODO 6: AUDITORÍA DE FONDOS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático que lee el capital del estudiante.
     public static int consultarSaldo(int idUsuario) {
-        // Declaramos la consulta de lectura dirigida específicamente a la columna de los créditos.
+        // Seleccionamos estrictamente el número que representa el dinero virtual.
         String sql = "SELECT creditos_virtuales FROM Usuario WHERE id_usuario = ?";
 
-        // Abrimos el túnel de conexión seguro hacia el archivo de SQLite.
+        // Iniciamos la conexión con SQLite.
         try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la petición.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
 
-            // Inyectamos el ID numérico del estudiante en el comodín de la consulta.
+            // Asignamos la llave primaria del estudiante.
             declaracion.setInt(1, idUsuario);
 
-            // Ejecutamos la lectura y almacenamos la fila resultante en la memoria RAM.
-            try (java.sql.ResultSet resultados = declaracion.executeQuery()) {
-                // Evaluamos si el cursor encontró al estudiante en la base de datos.
+            // Efectuamos la lectura.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Evaluamos si el estudiante existe.
                 if (resultados.next()) {
-                    // Extraemos y retornamos el valor matemático exacto de sus créditos actuales.
+                    // Devolvemos el saldo actual.
                     return resultados.getInt("creditos_virtuales");
-                    // Cerramos el condicional de existencia.
+                    // Cerramos condición.
                 }
-                // Cerramos el lector de resultados para no dejar fugas de memoria.
+                // Vaciamos lector de memoria.
             }
-
-            // Capturamos cualquier colisión o error de lectura en el disco.
+            // Atrapamos bloqueos físicos.
         } catch (SQLException e) {
-            // Imprimimos el rastro de la falla en la consola para depuración.
-            System.out.println("Error al consultar saldo: " + e.getMessage());
-            // Cerramos el bloque de protección contra errores.
+            // Notificamos problema de acceso al saldo.
+            System.out.println("ERROR DAO -> Fallo al auditar los fondos: " + e.getMessage());
+            // Cerramos el control.
         }
-        // Retornamos 0 por seguridad si ocurre un error catastrófico; ante la duda, nadie tiene saldo infinito.
+        // Retornamos saldo cero como mecanismo de seguridad ante la duda.
         return 0;
-        // Cerramos el método de consulta económica.
+        // Cerramos el auditor financiero.
     }
 
-    // -------------------------------------------------------------------------
-    // MÉTODO 6: Cobrar por la descarga de un apunte.
-    // -------------------------------------------------------------------------
+    // ========================================================================================
+    // MÉTODO 7: COBRO POR DESCARGAS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático para debitar fondos tras una transacción exitosa en la tienda.
     public static void cobrarCreditos(int idUsuario, int cantidadACobrar) {
-        // Redactamos la consulta de actualización restando matemáticamente la cantidad del saldo actual.
+        // Alteramos la columna restando el costo estipulado.
         String sql = "UPDATE Usuario SET creditos_virtuales = creditos_virtuales - ? WHERE id_usuario = ?";
 
-        // Iniciamos la conexión transaccional con la base de datos.
+        // Abrimos la sesión transaccional.
         try (Connection conexion = ConexionDB.conectar();
+             // Configuramos el inyector.
              PreparedStatement declaracion = conexion.prepareStatement(sql)) {
 
-            // Inyectamos el costo de la descarga (que vendrá del MotorEconomia) en el primer comodín.
+            // Asignamos el descuento numérico.
             declaracion.setInt(1, cantidadACobrar);
-            // Inyectamos el ID del estudiante al que se le aplicará el cobro.
+            // Asignamos la víctima del débito.
             declaracion.setInt(2, idUsuario);
-
-            // Ejecutamos la orden de escritura y modificación irreversible en el disco duro.
+            // Ejecutamos la orden de extracción financiera.
             declaracion.executeUpdate();
 
-            // Atrapamos las excepciones originadas por bloqueos en el archivo .db.
+            // Atrapamos fallas de bloqueo I/O.
         } catch (SQLException e) {
-            // Anotamos en la consola el fallo del cobro.
-            System.out.println("Error crítico al cobrar créditos: " + e.getMessage());
-            // Cerramos el bloque de gestión de excepciones.
+            // Señalamos el fallo de deducción en la terminal.
+            System.out.println("ERROR DAO -> Falla al debitar los créditos: " + e.getMessage());
+            // Cerramos captura de errores.
         }
-        // Cerramos el método de cobro virtual.
+        // Cerramos la función de cobro.
     }
 
-// Cerramos la clase UsuarioDAO.
+// Cerramos de manera concluyente la arquitectura de la clase UsuarioDAO.
 }

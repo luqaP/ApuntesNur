@@ -1,86 +1,84 @@
+// Declaramos el paquete oficial de tu universidad para la estructura lógica del proyecto.
 package bo.edu.nur;
 
+// Importamos librerías nativas para la manipulación física de archivos en el disco duro.
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-// Importamos la librería nativa para generar Identificadores Únicos Universales matemáticos.
 import java.util.UUID;
 
-import org.springframework.web.bind.annotation.RestController;
+// Importamos los componentes core de Spring Web para la gestión de peticiones HTTP.
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-// Importamos la clase de Sesión para verificar la identidad del estudiante que sube el archivo.
 import jakarta.servlet.http.HttpSession;
 
-@RestController
+// Inyectamos la directiva Controller (MVC) para que este componente gestione vistas y redirecciones.
+@Controller
 public class ControladorApunte {
 
+    // Escuchamos la petición POST que envía el formulario de subida desde el Dashboard.
     @PostMapping("/subir-apunte")
-    // Inyectamos HttpSession en el método para acceder a la identidad del usuario logueado.
+    // Declaramos el método público que orquesta la validación, el guardado y el cobro de recompensas.
     public String procesarSubida(@RequestParam("tituloApunte") String titulo,
                                  @RequestParam("categoriaMateria") String categoria,
                                  @RequestParam("archivoFisico") MultipartFile archivo,
                                  HttpSession sesion) {
 
-        // Paso A: VERIFICACIÓN DE IDENTIDAD Y FRAUDE
-        // Comprobamos si el usuario se saltó el login forzando la petición HTTP.
+        // 1. SEGURIDAD DE SESIÓN: Verificamos si el estudiante está realmente logueado.
         String aliasUsuario = (String) sesion.getAttribute("usuarioLogueado");
         if (aliasUsuario == null) {
-            return "<h2>Acceso Denegado</h2><p>Debes iniciar sesión para subir apuntes.</p>";
+            return "redirect:/";
         }
 
-        // Filtramos archivos vacíos o extremadamente pequeños para evitar el farmeo de créditos.
-        if (archivo.isEmpty() || archivo.getSize() < 50) {
-            return "<h2>Fraude Detectado</h2><p>El archivo es inválido o está vacío.</p>";
+        // 2. GATEKEEPING: Invocamos al validador estricto para bloquear archivos basura antes de tocar el disco.
+        if (!ValidadorApunte.esArchivoValido(archivo)) {
+            // Si el archivo falla, redirigimos al dashboard con una bandera de error técnica.
+            return "redirect:/dashboard?error=archivo_invalido";
         }
 
-        String nombreOriginal = archivo.getOriginalFilename();
-        if (nombreOriginal == null || (!nombreOriginal.toLowerCase().endsWith(".md") && !nombreOriginal.toLowerCase().endsWith(".pdf"))) {
-            return "<h2>Formato Inválido</h2><p>Solo se permiten archivos Markdown (.md) y PDF.</p>";
-        }
-
-        // Paso B: ELIMINACIÓN DE COLISIÓN DE NOMBRES (BUG 2 FIX)
-        // Generamos un código UUID aleatorio (ej. "550e8400-e29b-41d4-a716-446655440000").
+        // 3. GENERACIÓN DE IDENTIDAD ÚNICA: Creamos un UUID para evitar colisiones de nombres de archivos.
         String codigoUnico = UUID.randomUUID().toString();
-        // Concatenamos el código con el nombre original (ej. "550e..._calculo.md"). ¡Imposible que se repita!
+        String nombreOriginal = archivo.getOriginalFilename();
         String nombreSeguro = codigoUnico + "_" + nombreOriginal;
 
+        // 4. PERSISTENCIA FÍSICA: Bloque protegido para operaciones de escritura en disco duro.
         try {
-            // Paso C: PERSISTENCIA FÍSICA EN DISCO DURO
             String nombreCarpeta = "repositorio_nur/";
-            File directorioDestino = new File(nombreCarpeta);
-            if (!directorioDestino.exists()) {
-                directorioDestino.mkdirs();
+            File directorio = new File(nombreCarpeta);
+
+            // Garantizamos que la carpeta repositorio exista antes de intentar escribir en ella.
+            if (!directorio.exists()) {
+                directorio.mkdirs();
             }
 
-            // Utilizamos el nuevo nombre seguro para guardar el archivo físico en Windows.
+            // Copiamos los bytes del navegador al disco físico de tu servidor.
             Path rutaFinal = Paths.get(nombreCarpeta + nombreSeguro);
             Files.copy(archivo.getInputStream(), rutaFinal, StandardCopyOption.REPLACE_EXISTING);
 
-            // Paso D: PERSISTENCIA LÓGICA Y ECONOMÍA
-            // Transformamos el alias de la sesión en un ID numérico usando nuestro nuevo método.
+            // 5. REGISTRO EN BASE DE DATOS: Persistimos la metadata y damos el premio por aporte académico.
             int idAutor = UsuarioDAO.obtenerIdPorAlias(aliasUsuario);
 
-            // Si el ID es válido, armamos el objeto de Java.
             if (idAutor != -1) {
-                // Instanciamos el modelo matemático del apunte.
-                Apunte documento = new Apunte(titulo, categoria, idAutor, rutaFinal.toString());
-                // Invocamos al puente DAO para escribir la fila en SQLite.
+                // Instanciamos el objeto con el constructor ORM que mapea la realidad al objeto Java.
+                Apunte documento = new Apunte(titulo, categoria, idAutor, nombreSeguro);
+                // Impactamos el registro en SQLite.
                 ApunteDAO.registrarApunte(documento);
-
-                // Le otorgamos al estudiante la recompensa por su aporte solidario.
+                // Sumamos la recompensa al creador por su aporte a la comunidad.
                 UsuarioDAO.sumarCreditos(idAutor, MotorEconomia.RECOMPENSA_SUBIDA);
             }
 
-            return "<h2>¡Aporte Validado!</h2><p>Tu archivo fue asegurado bajo el código " + codigoUnico.substring(0,8) + ". ¡Ganaste " + MotorEconomia.RECOMPENSA_SUBIDA + " créditos!</p><br><a href='/dashboard.html'>Volver a la Tienda</a>";
-
+            // Atrapamos errores de I/O en caso de fallo de hardware o permisos de lectura.
         } catch (IOException e) {
-            System.out.println("Error físico al escribir: " + e.getMessage());
-            return "<h2>Fallo del Servidor</h2><p>No se pudo almacenar el documento físico.</p>";
+            System.out.println("CRÍTICO -> Fallo en escritura física: " + e.getMessage());
+            return "redirect:/dashboard?error=fallo_servidor";
         }
+
+        // 6. REDIRECCIÓN LIMPIA: Forzamos la vuelta al Dashboard, eliminando la página blanca de raíz.
+        return "redirect:/dashboard";
     }
 }

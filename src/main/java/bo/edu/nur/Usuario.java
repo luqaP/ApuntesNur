@@ -1,94 +1,156 @@
-// Declaramos que esta clase pertenece al paquete principal de tu proyecto universitario para que Spring Boot la reconozca.
+// Declaramos el paquete estructural del proyecto.
 package bo.edu.nur;
 
-// Importamos la clase LocalDate nativa de Java para manejar de forma profesional y matemática las fechas de acceso del estudiante.
+// Importamos la librería nativa para generar estampas de tiempo.
 import java.time.LocalDate;
 
-// Declaramos la clase pública Usuario que servirá como la plantilla o molde exacto para crear a los estudiantes en la memoria RAM.
+// Declaramos la clase pública que servirá de molde para la memoria RAM.
 public class Usuario {
 
-    // Declaramos el atributo privado de tipo texto para almacenar el alias único del estudiante en la plataforma.
+    // ========================================================================================
+    // ATRIBUTOS DE LA ENTIDAD
+    // ========================================================================================
+
+    // Llave primaria numérica auto-generada por SQLite.
+    private int idUsuario;
+    // Identificador textual único del estudiante.
     private String nombreUsuario;
-    // Declaramos el atributo privado de tipo texto para guardar el nombre real y completo del usuario.
+    // Nombre legal y completo del estudiante.
     private String nombreCompleto;
-    // Declaramos el atributo privado de tipo texto para el número de registro o matrícula oficial de la universidad.
+    // Número de matrícula universitaria.
     private String numeroCredencial;
-    // Declaramos el atributo privado de tipo texto para resguardar la contraseña de acceso (idealmente encriptada a futuro).
+    // Hash criptográfico de seguridad.
     private String contrasena;
-    // Declaramos el atributo privado y numérico entero para manejar el saldo de la economía y descargas virtuales.
+    // Saldo de la economía virtual.
     private int creditosVirtuales;
-    // Declaramos el atributo privado y numérico entero para contar los días consecutivos que el estudiante inicia sesión.
+    // Contador de ingresos diarios.
     private int rachaDiaria;
-    // Declaramos el atributo privado de tipo LocalDate para registrar con precisión de calendario la última vez que el estudiante entró.
-    private LocalDate fechaUltimoAcceso;
+    // Estampa de tiempo del último acceso.
+    private String fechaUltimoAcceso;
 
-    // Definimos el constructor principal que exige los cuatro datos vitales cada vez que instanciemos un nuevo estudiante con la palabra reservada 'new'.
-    public Usuario(String alias, String nombre, String credencial, String clave) {
-        // Asignamos el valor del parámetro 'alias' al atributo interno de la clase utilizando 'this' para evitar ambigüedades.
-        this.nombreUsuario = alias;
-        // Asignamos el valor del parámetro 'nombre' al atributo persistente de nombre completo.
-        this.nombreCompleto = nombre;
-        // Asignamos el número de matrícula provisto al atributo de la credencial universitaria.
-        this.numeroCredencial = credencial;
-        // Asignamos la contraseña recibida al atributo privado de seguridad de la instancia.
-        this.contrasena = clave;
-        // Inicializamos los créditos virtuales estrictamente en 0 por defecto al momento de un nuevo registro.
+    // ========================================================================================
+    // CONSTRUCTORES
+    // ========================================================================================
+
+    // Constructor de Extracción: Utilizado por el DAO cuando lee una fila completa de SQLite.
+    public Usuario(int idUsuario, String nombreUsuario, String nombreCompleto, String numeroCredencial, String contrasena, int creditosVirtuales, int rachaDiaria, String fechaUltimoAcceso) {
+        // Mapeamos el ID.
+        this.idUsuario = idUsuario;
+        // Mapeamos el alias.
+        this.nombreUsuario = nombreUsuario;
+        // Mapeamos el nombre real.
+        this.nombreCompleto = nombreCompleto;
+        // Mapeamos la credencial.
+        this.numeroCredencial = numeroCredencial;
+        // Mapeamos la clave encriptada.
+        this.contrasena = contrasena;
+        // Mapeamos los créditos.
+        this.creditosVirtuales = creditosVirtuales;
+        // Mapeamos la racha.
+        this.rachaDiaria = rachaDiaria;
+        // Mapeamos la fecha.
+        this.fechaUltimoAcceso = fechaUltimoAcceso;
+        // Cerramos el constructor de extracción.
+    }
+
+    // Constructor de Inserción: Utilizado por el ControladorRegistro al crear un nuevo estudiante.
+    public Usuario(String nombreUsuario, String nombreCompleto, String numeroCredencial, String contrasena) {
+        // Asignamos un ID temporal en 0.
+        this.idUsuario = 0;
+        // Asignamos alias digitado.
+        this.nombreUsuario = nombreUsuario;
+        // Asignamos nombre real digitado.
+        this.nombreCompleto = nombreCompleto;
+        // Asignamos credencial validada.
+        this.numeroCredencial = numeroCredencial;
+        // Asignamos clave cifrada.
+        this.contrasena = contrasena;
+        // Inicializamos saldo en 0.
         this.creditosVirtuales = 0;
-        // Inicializamos la racha diaria en 0 por defecto, ya que es el primer día de vida de este usuario.
+        // Inicializamos racha en 0.
         this.rachaDiaria = 0;
-        // Invocamos el método estático now() para capturar la fecha exacta del reloj del sistema operativo y la guardamos.
-        this.fechaUltimoAcceso = LocalDate.now();
-        // Cerramos el bloque de ejecución estricto del método constructor.
+        // Inyectamos la fecha actual como texto.
+        this.fechaUltimoAcceso = LocalDate.now().toString();
+        // Cerramos el constructor de inserción.
     }
 
-    // Definimos un método público que retorna texto (String) para que otras clases externas consulten el nombre de usuario.
-    public String obtenerNombreUsuario() {
-        // Retornamos el valor almacenado en el atributo privado nombreUsuario de esta instancia específica.
+    // ========================================================================================
+    // MÉTODOS PUENTE PARA THYMELEAF Y CONTROLADORES MODERNOS
+    // ========================================================================================
+
+    // Extraemos la llave primaria (Requerido por ControladorPerfil).
+    public int getIdUsuario() {
+        // Retornamos el ID.
+        return this.idUsuario;
+        // Cerramos el getter.
+    }
+
+    // Extraemos el alias (Requerido por Thymeleaf y ControladorDashboard).
+    public String getAlias() {
+        // Retornamos el nombre de usuario.
         return this.nombreUsuario;
-        // Cerramos el bloque de ejecución del método obtenerNombreUsuario().
+        // Cerramos el getter.
     }
 
-    // Definimos un método público que retorna texto para permitir el acceso de lectura al nombre completo del estudiante.
-    public String obtenerNombreCompleto() {
-        // Retornamos la cadena de texto almacenada de forma segura en el atributo privado nombreCompleto.
-        return this.nombreCompleto;
-        // Cerramos el bloque de ejecución del método obtenerNombreCompleto().
-    }
-
-    // Definimos un método público que retorna texto para consultar la matrícula universitaria de la NUR.
-    public String obtenerNumeroCredencial() {
-        // Retornamos el valor del atributo privado numeroCredencial, el cual está diseñado para soportar valores nulos si el usuario es externo.
-        return this.numeroCredencial;
-        // Cerramos el bloque de ejecución del método obtenerNumeroCredencial().
-    }
-
-    // Definimos un método público que retorna texto para recuperar la clave de acceso del usuario.
-    public String obtenerContrasena() {
-        // Retornamos el contenido del atributo privado contrasena para que el UsuarioDAO pueda validarlo contra la base de datos.
-        return this.contrasena;
-        // Cerramos el bloque de ejecución del método obtenerContrasena().
-    }
-
-    // Definimos un método público que retorna un entero primitivo (int) para consultar la cartera virtual del estudiante.
-    public int obtenerCreditos() {
-        // Retornamos el valor numérico exacto almacenado en el atributo privado creditosVirtuales.
+    // Extraemos el saldo (Requerido por Thymeleaf y ControladorDashboard).
+    public int getCreditos() {
+        // Retornamos los créditos virtuales.
         return this.creditosVirtuales;
-        // Cerramos el bloque de ejecución del método obtenerCreditos().
+        // Cerramos el getter.
     }
 
-    // Definimos un método público que retorna un entero primitivo para auditar la racha de días consecutivos.
+    // ========================================================================================
+    // MÉTODOS HEREDADOS (Compatibilidad estricta con UsuarioDAO antiguo)
+    // ========================================================================================
+
+    // Retornamos el alias con la nomenclatura antigua para no romper inserciones previas.
+    public String obtenerNombreUsuario() {
+        // Devolvemos el dato.
+        return this.nombreUsuario;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el nombre completo.
+    public String obtenerNombreCompleto() {
+        // Devolvemos el dato.
+        return this.nombreCompleto;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos la credencial institucional.
+    public String obtenerNumeroCredencial() {
+        // Devolvemos el dato.
+        return this.numeroCredencial;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el hash criptográfico.
+    public String obtenerContrasena() {
+        // Devolvemos el dato.
+        return this.contrasena;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el saldo con la nomenclatura antigua.
+    public int obtenerCreditos() {
+        // Devolvemos el dato.
+        return this.creditosVirtuales;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos la racha diaria.
     public int obtenerRachaDiaria() {
-        // Retornamos el valor numérico persistido en el atributo privado rachaDiaria.
+        // Devolvemos el dato.
         return this.rachaDiaria;
-        // Cerramos el bloque de ejecución del método obtenerRachaDiaria().
+        // Cerramos el getter antiguo.
     }
 
-    // Definimos un método público que retorna la fecha convertida explícitamente a texto para garantizar compatibilidad con el motor de SQLite.
+    // Retornamos la estampa de tiempo como texto.
     public String obtenerFechaUltimoAccesoComoTexto() {
-        // Invocamos el método nativo toString() del objeto LocalDate para transformar la estructura de fecha en un formato de texto estándar (YYYY-MM-DD).
-        return this.fechaUltimoAcceso.toString();
-        // Cerramos el bloque de ejecución del método obtenerFechaUltimoAccesoComoTexto().
+        // Devolvemos el dato.
+        return this.fechaUltimoAcceso;
+        // Cerramos el getter antiguo.
     }
 
-// Cerramos la declaración estructural y encapsulada de tu clase Usuario completa.
+// Cerramos la estructura absoluta de la clase Usuario.
 }

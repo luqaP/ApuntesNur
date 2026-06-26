@@ -1,60 +1,61 @@
-// Declaramos el paquete oficial de nuestra universidad.
+// Declaramos el paquete oficial de nuestra institución.
 package bo.edu.nur;
 
-// Importamos Component para que Spring Boot active este filtro automáticamente al encender el servidor.
+// Importamos Component para que Spring Boot enganche este filtro en la fase de arranque.
 import org.springframework.stereotype.Component;
-// Importamos la interfaz Filter de Jakarta para interceptar las peticiones antes de que lleguen a los archivos.
+// Importamos la interfaz nativa Filter de Jakarta para interceptar peticiones web de bajo nivel.
 import jakarta.servlet.Filter;
-// Importamos FilterChain para permitir que la petición continúe su camino si todo está en orden.
+// Importamos FilterChain para habilitar el pase de la petición si el usuario es válido.
 import jakarta.servlet.FilterChain;
-// Importamos ServletRequest para leer la petición entrante cruda.
+// Importamos ServletRequest para analizar la petición entrante desde el navegador.
 import jakarta.servlet.ServletRequest;
-// Importamos ServletResponse para poder emitir bloqueos o redirecciones de salida.
+// Importamos ServletResponse para poder inyectar directivas de salida.
 import jakarta.servlet.ServletResponse;
-// Importamos HttpServletRequest para extraer la URL exacta a la que intenta acceder el usuario.
+// Importamos HttpServletRequest para extraer la URL exacta solicitada por el cliente.
 import jakarta.servlet.http.HttpServletRequest;
-// Importamos HttpServletResponse para ejecutar la orden de expulsión si es necesario.
+// Importamos HttpServletResponse para ejecutar la orden de expulsión mediante código HTTP 302.
 import jakarta.servlet.http.HttpServletResponse;
-// Importamos HttpSession para revisar si el usuario tiene su tarjeta de identificación.
+// Importamos HttpSession para revisar la existencia de la credencial en RAM.
 import jakarta.servlet.http.HttpSession;
-// Importamos IOException y ServletException para manejar fallas críticas en la intercepción.
+// Importamos las excepciones necesarias para el manejo de flujos rotos.
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 
-// Usamos @Component para registrar obligatoriamente este guardia de seguridad en el núcleo de Spring Boot.
+// Registramos el componente en el núcleo de inversión de control del framework.
 @Component
-// Declaramos la clase FiltroSeguridad implementando la interfaz nativa Filter.
+// Declaramos el muro de seguridad perimetral implementando la interfaz estricta.
 public class FiltroSeguridad implements Filter {
 
-    // Sobrescribimos el método principal doFilter que se ejecuta en cada milisegundo que alguien pide un archivo.
+    // Sobrescribimos el método principal que audita cada milisegundo de navegación en el servidor.
     @Override
     public void doFilter(ServletRequest peticion, ServletResponse respuesta, FilterChain cadena) throws IOException, ServletException {
-        // Convertimos la petición cruda a HttpServletRequest para acceder a funciones web avanzadas.
+        // Convertimos el paquete crudo en un objeto con funciones web explícitas.
         HttpServletRequest req = (HttpServletRequest) peticion;
-        // Convertimos la respuesta cruda a HttpServletResponse para poder redirigir.
+        // Transformamos la respuesta genérica para habilitar redirecciones.
         HttpServletResponse res = (HttpServletResponse) respuesta;
-        // Extraemos exactamente qué archivo HTML está intentando abrir el estudiante.
+        // Extraemos la cadena de texto con la ruta solicitada por el cliente.
         String ruta = req.getRequestURI();
 
-        // Verificamos de forma estricta si la ruta solicitada es nuestra tienda protegida.
-        if (ruta.equals("/dashboard.html")) {
-            // Solicitamos la sesión actual, enviando 'false' para que NO cree una nueva si no existe.
+        // REEMPLAZO CRÍTICO: Vigilamos la ruta mapeada real "/dashboard", eliminando la extensión inútil.
+        if (ruta.equals("/dashboard")) {
+            // Solicitamos la sesión actual enviando 'false' para evitar crear una sesión fantasma.
             HttpSession sesion = req.getSession(false);
-            // Evaluamos si no hay sesión activa, o si la sesión existe pero no tiene la llave de "usuarioLogueado".
+
+            // Comprobamos si el espacio en memoria es nulo o carece de la llave de autenticación.
             if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
-                // Al detectar al intruso, bloqueamos el acceso y lo redirigimos obligatoriamente al login.
+                // Al confirmar la intrusión, disparamos una redirección forzosa hacia la pantalla de inicio de sesión.
                 res.sendRedirect("/");
-                // Usamos 'return' para abortar inmediatamente la ejecución del código restante.
+                // Abortamos la ejecución de la función para que el código maligno no avance a la capa de servicios.
                 return;
-                // Cerramos la validación de intrusión.
+                // Cerramos la protección perimetral del panel de control.
             }
-            // Cerramos el análisis de la ruta objetivo.
+            // Cerramos el bloque de auditoría de rutas protegidas.
         }
 
-        // Si no es el dashboard, o si el usuario sí estaba logueado, dejamos que el servidor procese la petición normalmente.
+        // Si la validación fue exitosa o si la ruta era pública, cedemos el paso a la cadena de filtros de Tomcat.
         cadena.doFilter(peticion, respuesta);
-        // Cerramos el bloque de ejecución del filtro principal.
+        // Cerramos el método núcleo de filtrado.
     }
 
-// Cerramos la declaración del componente de seguridad.
+// Cerramos la arquitectura absoluta de la clase de seguridad.
 }
