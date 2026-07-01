@@ -1,0 +1,124 @@
+<html>
+<head>
+<title>InstaladorDB.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+InstaladorDB.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">bo</span><span class="s2">.</span><span class="s1">edu</span><span class="s2">.</span><span class="s1">nur</span><span class="s2">;</span><span class="s3">// Importamos la clase Connection nativa de java.sql para recibir la sesión activa con nuestro archivo SQLite.</span>
+
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">Connection</span><span class="s2">;</span>
+<span class="s3">// Importamos la clase Statement de java.sql que nos permitirá enviar sentencias de texto SQL puro hacia el motor de base de datos.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">Statement</span><span class="s2">;</span>
+<span class="s3">// Importamos la clase SQLException de java.sql para capturar posibles errores de sintaxis en nuestras instrucciones SQL.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">SQLException</span><span class="s2">;</span>
+
+<span class="s3">// Declaramos la clase pública bo.edu.nur.InstaladorDB, la cual tendrá la responsabilidad exclusiva de fabricar todas las tablas de la plataforma.</span>
+<span class="s0">public class </span><span class="s1">InstaladorDB </span><span class="s2">{</span>
+
+    <span class="s3">// Definimos un método público y estático llamado crearTablas para invocar la construcción de la base de datos directamente.</span>
+    <span class="s0">public static void </span><span class="s1">crearTablas</span><span class="s2">() {</span>
+        <span class="s3">// Declaramos una variable de texto y redactamos la sentencia SQL exacta para crear la tabla de usuarios.</span>
+        <span class="s1">String sqlUsuario </span><span class="s2">= </span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Usuario (&quot;</span>
+                <span class="s3">// Definimos la llave primaria autoincrementable para identificar de forma única a cada estudiante de la NUR o externo.</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, &quot;</span>
+                <span class="s3">// Definimos el nombre de usuario como texto obligatorio y único en todo el sistema para los inicios de sesión.</span>
+                <span class="s2">+ </span><span class="s4">&quot;nombre_usuario TEXT NOT NULL UNIQUE, &quot;</span>
+                <span class="s3">// Definimos el nombre completo del usuario como un campo de texto obligatorio.</span>
+                <span class="s2">+ </span><span class="s4">&quot;nombre_completo TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos el número de credencial permitiendo que sea nulo para aquellos que no pertenecen a la universidad.</span>
+                <span class="s2">+ </span><span class="s4">&quot;numero_credencial TEXT, &quot;</span>
+                <span class="s3">// Definimos la columna de la contraseña como texto obligatorio para guardar el hash de seguridad.</span>
+                <span class="s2">+ </span><span class="s4">&quot;contrasena TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la cartera de créditos virtuales con un valor predeterminado de cero inicial.</span>
+                <span class="s2">+ </span><span class="s4">&quot;creditos_virtuales INTEGER DEFAULT 0, &quot;</span>
+                <span class="s3">// Definimos la racha diaria de inicios de sesión con un valor predeterminado de cero.</span>
+                <span class="s2">+ </span><span class="s4">&quot;racha_diaria INTEGER DEFAULT 0, &quot;</span>
+                <span class="s3">// Definimos la fecha del último acceso como texto, ya que SQLite almacena las fechas inmutables como cadenas (String).</span>
+                <span class="s2">+ </span><span class="s4">&quot;fecha_ultimo_acceso TEXT&quot;</span>
+                <span class="s3">// Cerramos el bloque de la instrucción SQL estructurada para la tabla bo.edu.nur.Usuario.</span>
+                <span class="s2">+ </span><span class="s4">&quot;);&quot;</span><span class="s2">;</span>
+
+        <span class="s3">// Declaramos una segunda variable de texto para almacenar la instrucción SQL que construirá la tabla de los apuntes.</span>
+        <span class="s1">String sqlApunte </span><span class="s2">= </span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Apunte (&quot;</span>
+                <span class="s3">// Definimos la llave primaria autoincrementable para identificar de forma única cada archivo Markdown subido.</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_apunte INTEGER PRIMARY KEY AUTOINCREMENT, &quot;</span>
+                <span class="s3">// Definimos el título del apunte como un campo de texto estrictamente obligatorio.</span>
+                <span class="s2">+ </span><span class="s4">&quot;titulo TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la categoría o materia a la que pertenece el documento como texto obligatorio para los foros.</span>
+                <span class="s2">+ </span><span class="s4">&quot;categoria_materia TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos una columna entera para guardar el ID del estudiante que subió el archivo (preparando la llave foránea).</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_autor INTEGER NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la ruta física del archivo en el disco duro de tu servidor local como texto obligatorio.</span>
+                <span class="s2">+ </span><span class="s4">&quot;ruta_archivo_fisico TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la fecha en la que se subió el documento Markdown como texto.</span>
+                <span class="s2">+ </span><span class="s4">&quot;fecha_subida TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Definimos el contador histórico de descargas del apunte, iniciando por defecto en cero.</span>
+                <span class="s2">+ </span><span class="s4">&quot;contador_descargas INTEGER DEFAULT 0, &quot;</span>
+                <span class="s3">// Definimos el promedio de calificación usando el tipo REAL (decimal en SQLite), iniciando en un promedio neutro de 0.0.</span>
+                <span class="s2">+ </span><span class="s4">&quot;promedio_estrellas REAL DEFAULT 0.0, &quot;</span>
+                <span class="s3">// Declaramos formalmente la relación de llave foránea vinculando el id_autor con el id_usuario de la tabla bo.edu.nur.Usuario.</span>
+                <span class="s2">+ </span><span class="s4">&quot;FOREIGN KEY (id_autor) REFERENCES Usuario(id_usuario)&quot;</span>
+                <span class="s3">// Cerramos el bloque de la instrucción SQL estructurada para la tabla bo.edu.nur.Apunte.</span>
+                <span class="s2">+ </span><span class="s4">&quot;);&quot;</span><span class="s2">;</span>
+
+        <span class="s3">// Declaramos una tercera variable de texto para almacenar la instrucción SQL de las transacciones de reseñas.</span>
+        <span class="s1">String sqlResena </span><span class="s2">= </span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Resena (&quot;</span>
+                <span class="s3">// Definimos la llave primaria autoincrementable para cada voto individual emitido en la plataforma.</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_resena INTEGER PRIMARY KEY AUTOINCREMENT, &quot;</span>
+                <span class="s3">// Definimos la columna entera para guardar el ID del apunte que está siendo calificado.</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_apunte INTEGER NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la columna entera para guardar el ID del estudiante que está emitiendo la calificación.</span>
+                <span class="s2">+ </span><span class="s4">&quot;id_usuario INTEGER NOT NULL, &quot;</span>
+                <span class="s3">// Definimos la cantidad de estrellas otorgadas como un número entero obligatorio (del 1 al 5).</span>
+                <span class="s2">+ </span><span class="s4">&quot;estrellas INTEGER NOT NULL, &quot;</span>
+                <span class="s3">// Definimos el comentario de retroalimentación de los apuntes como un campo de texto opcional.</span>
+                <span class="s2">+ </span><span class="s4">&quot;comentario TEXT, &quot;</span>
+                <span class="s3">// Definimos la fecha exacta en la que se registró el voto en formato de texto.</span>
+                <span class="s2">+ </span><span class="s4">&quot;fecha_registro TEXT NOT NULL, &quot;</span>
+                <span class="s3">// Declaramos la llave foránea que conecta esta reseña con su documento correspondiente en la tabla central bo.edu.nur.Apunte.</span>
+                <span class="s2">+ </span><span class="s4">&quot;FOREIGN KEY (id_apunte) REFERENCES Apunte(id_apunte), &quot;</span>
+                <span class="s3">// Declaramos la llave foránea que conecta esta reseña con el estudiante específico en la tabla maestra bo.edu.nur.Usuario.</span>
+                <span class="s2">+ </span><span class="s4">&quot;FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario)&quot;</span>
+                <span class="s3">// Cerramos el bloque de la instrucción SQL estructurada para la tabla transaccional bo.edu.nur.Resena.</span>
+                <span class="s2">+ </span><span class="s4">&quot;);&quot;</span><span class="s2">;</span>
+
+        <span class="s3">// Abrimos un bloque try-with-resources llamando a la clase bo.edu.nur.ConexionDB para garantizar que la sesión se cierre sola al terminar.</span>
+        <span class="s3">// Instanciamos también el objeto Statement que ejecutará físicamente los comandos en el motor SQLite.</span>
+        <span class="s0">try </span><span class="s2">(</span><span class="s1">Connection conexion </span><span class="s2">= </span><span class="s1">ConexionDB</span><span class="s2">.</span><span class="s1">conectar</span><span class="s2">();</span>
+             <span class="s1">Statement declaracion </span><span class="s2">= </span><span class="s1">conexion</span><span class="s2">.</span><span class="s1">createStatement</span><span class="s2">()) {</span>
+
+            <span class="s3">// Invocamos el método execute() enviando la primera instrucción SQL para fabricar la tabla de Usuarios.</span>
+            <span class="s1">declaracion</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">(</span><span class="s1">sqlUsuario</span><span class="s2">);</span>
+            <span class="s3">// Invocamos el método execute() enviando la segunda instrucción SQL para fabricar la tabla de Apuntes.</span>
+            <span class="s1">declaracion</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">(</span><span class="s1">sqlApunte</span><span class="s2">);</span>
+            <span class="s3">// Invocamos el método execute() enviando la tercera instrucción SQL para fabricar la tabla transaccional de Reseñas.</span>
+            <span class="s1">declaracion</span><span class="s2">.</span><span class="s1">execute</span><span class="s2">(</span><span class="s1">sqlResena</span><span class="s2">);</span>
+
+            <span class="s3">// Imprimimos un mensaje en consola confirmando que la estructura relacional completa fue inyectada en el archivo SQLite.</span>
+            <span class="s1">System</span><span class="s2">.</span><span class="s1">out</span><span class="s2">.</span><span class="s1">println</span><span class="s2">(</span><span class="s4">&quot;Estructura de la base de datos construida: Tablas bo.edu.nur.Usuario, bo.edu.nur.Apunte y bo.edu.nur.Resena listas.&quot;</span><span class="s2">);</span>
+
+            <span class="s3">// Abrimos el bloque catch para capturar cualquier posible error de sintaxis SQL que rompa la ejecución.</span>
+        <span class="s2">} </span><span class="s0">catch </span><span class="s2">(</span><span class="s1">SQLException e</span><span class="s2">) {</span>
+            <span class="s3">// Imprimimos el mensaje de error crítico concatenado con la descripción exacta devuelta por el driver JDBC.</span>
+            <span class="s1">System</span><span class="s2">.</span><span class="s1">out</span><span class="s2">.</span><span class="s1">println</span><span class="s2">(</span><span class="s4">&quot;Error crítico al intentar crear las tablas: &quot; </span><span class="s2">+ </span><span class="s1">e</span><span class="s2">.</span><span class="s1">getMessage</span><span class="s2">());</span>
+            <span class="s3">// Cerramos la estructura de control de excepciones try-catch.</span>
+        <span class="s2">}</span>
+        <span class="s3">// Cerramos el bloque de ejecución del método estático y principal crearTablas().</span>
+    <span class="s2">}</span>
+
+<span class="s3">// Cerramos la declaración general de la clase pública bo.edu.nur.InstaladorDB.</span>
+<span class="s2">}</span></pre>
+</body>
+</html>

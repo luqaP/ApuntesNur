@@ -1,0 +1,151 @@
+<html>
+<head>
+<title>SembradorDatos.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+SembradorDatos.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos la pertenencia innegociable al paquete raíz de tu proyecto universitario.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos la interfaz nativa de Spring Boot que nos permite ejecutar código justo después de encender el servidor Tomcat.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">boot</span><span class="s3">.</span><span class="s1">CommandLineRunner</span><span class="s3">;</span>
+<span class="s0">// Importamos la anotación Component para que el radar de Spring detecte e instancie esta clase automáticamente.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">stereotype</span><span class="s3">.</span><span class="s1">Component</span><span class="s3">;</span>
+<span class="s0">// Importamos las herramientas de conexión JDBC de Java para manipular SQLite directamente.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">Connection</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">Statement</span><span class="s3">;</span>
+
+<span class="s0">// Inyectamos la directiva Component. Sin esto, la clase sería un bloque de texto inútil e ignorado por el compilador.</span>
+<span class="s1">@Component</span>
+<span class="s0">// Declaramos la clase pública implementando la interfaz estructurada de ejecución en línea de comandos.</span>
+<span class="s2">public class </span><span class="s1">SembradorDatos </span><span class="s2">implements </span><span class="s1">CommandLineRunner </span><span class="s3">{</span>
+
+    <span class="s0">// Sobrescribimos el método obligatorio 'run', el cual encapsula toda la lógica de inicialización autónoma.</span>
+    <span class="s1">@Override</span>
+    <span class="s2">public void </span><span class="s1">run</span><span class="s3">(</span><span class="s1">String... args</span><span class="s3">) </span><span class="s2">throws </span><span class="s1">Exception </span><span class="s3">{</span>
+
+        <span class="s0">// Imprimimos un aviso en la consola de IntelliJ para auditar el inicio del proceso de siembra.</span>
+        <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;====== INICIANDO PROTOCOLO DE SIEMBRA DE DATOS ======&quot;</span><span class="s3">);</span>
+        <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;1. Verificando la infraestructura física de SQLite...&quot;</span><span class="s3">);</span>
+
+        <span class="s0">// FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS (Solución al error SQLITE_ERROR)</span>
+        <span class="s0">// Abrimos un bloque try-with-resources para conectar con la base de datos y asegurar el cierre automático del túnel.</span>
+        <span class="s0">// FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS</span>
+        <span class="s0">// FASE 1: RECONSTRUCCIÓN MASIVA DE LA BASE DE DATOS (V2)</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">Statement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">createStatement</span><span class="s3">()) {</span>
+
+            <span class="s0">// 1. Tabla Usuario Expandida (Añadimos carrera y calificación)</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">execute</span><span class="s3">(</span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Usuario (&quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;nombre_usuario TEXT UNIQUE, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;nombre_completo TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;numero_credencial TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;contrasena TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;carrera_estudiante TEXT, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA: Para el algoritmo de recomendación</span>
+                    <span class="s4">&quot;calificacion_autor REAL DEFAULT 0.0, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA: Promedio de reputación</span>
+                    <span class="s4">&quot;creditos_virtuales INTEGER DEFAULT 0, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;racha_diaria INTEGER DEFAULT 0, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;fecha_ultimo_acceso TEXT)&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// 2. Tabla Apunte Expandida (Añadimos las métricas sociales)</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">execute</span><span class="s3">(</span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Apunte (&quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_apunte INTEGER PRIMARY KEY AUTOINCREMENT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;titulo TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;categoria_materia TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_autor INTEGER, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;ruta_archivo_fisico TEXT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;conteo_vistas INTEGER DEFAULT 0, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA</span>
+                    <span class="s4">&quot;conteo_descargas INTEGER DEFAULT 0, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA</span>
+                    <span class="s4">&quot;conteo_likes INTEGER DEFAULT 0, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA</span>
+                    <span class="s4">&quot;conteo_dislikes INTEGER DEFAULT 0, &quot; </span><span class="s3">+ </span><span class="s0">// NUEVA COLUMNA</span>
+                    <span class="s4">&quot;FOREIGN KEY(id_autor) REFERENCES Usuario(id_usuario))&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// 3. NUEVA TABLA: Historial de Visitas (Para las recomendaciones y recientes)</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">execute</span><span class="s3">(</span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Historial_Visitas (&quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_visita INTEGER PRIMARY KEY AUTOINCREMENT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_usuario INTEGER, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_apunte INTEGER, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;fecha_visita DATETIME DEFAULT CURRENT_TIMESTAMP, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// 4. NUEVA TABLA: Biblioteca de Adquiridos (Para que no paguen dos veces)</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">execute</span><span class="s3">(</span><span class="s4">&quot;CREATE TABLE IF NOT EXISTS Biblioteca_Adquiridos (&quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_adquisicion INTEGER PRIMARY KEY AUTOINCREMENT, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_usuario INTEGER, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;id_apunte INTEGER, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;fecha_compra DATETIME DEFAULT CURRENT_TIMESTAMP, &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), &quot; </span><span class="s3">+</span>
+                    <span class="s4">&quot;FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))&quot;</span><span class="s3">);</span>
+
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;-&gt; Infraestructura de Base de Datos V2 validada correctamente.&quot;</span><span class="s3">);</span>
+
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">Exception e</span><span class="s3">) {</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error crítico al reconstruir las tablas: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+        <span class="s3">}</span>
+        <span class="s0">// FASE 2: INYECCIÓN DE USUARIOS Y CRIPTOGRAFÍA</span>
+        <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;2. Buscando perfiles de prueba...&quot;</span><span class="s3">);</span>
+
+        <span class="s0">// Utilizamos el DAO para preguntar si tu perfil de desarrollador ya existe en la tabla recién creada.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s4">&quot;lucca_dev&quot;</span><span class="s3">) == -</span><span class="s5">1</span><span class="s3">) {</span>
+
+            <span class="s0">// CRIPTOGRAFÍA: Encriptamos la contraseña de prueba usando el algoritmo adaptativo jBCrypt con su respectivo 'salt'.</span>
+            <span class="s1">String claveLucca </span><span class="s3">= </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">hashpw</span><span class="s3">(</span><span class="s4">&quot;password123&quot;</span><span class="s3">, </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">gensalt</span><span class="s3">());</span>
+
+            <span class="s0">// Instanciamos el modelo matemático del estudiante inyectando el hash seguro en lugar de texto plano.</span>
+            <span class="s1">Usuario estudiante1 </span><span class="s3">= </span><span class="s2">new </span><span class="s1">Usuario</span><span class="s3">(</span><span class="s4">&quot;lucca_dev&quot;</span><span class="s3">, </span><span class="s4">&quot;Lucca Ortiz&quot;</span><span class="s3">, </span><span class="s4">&quot;REG-2026&quot;</span><span class="s3">, </span><span class="s1">claveLucca</span><span class="s3">);</span>
+
+            <span class="s0">// Ordenamos al DAO que escriba esta fila en el archivo .db.</span>
+            <span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">registrarUsuario</span><span class="s3">(</span><span class="s1">estudiante1</span><span class="s3">);</span>
+
+            <span class="s0">// Recuperamos el ID numérico autogenerado por SQLite para poder manipular la economía.</span>
+            <span class="s2">int </span><span class="s1">idLucca </span><span class="s3">= </span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s4">&quot;lucca_dev&quot;</span><span class="s3">);</span>
+            <span class="s0">// Le otorgamos un capital semilla de 50 créditos para facilitar las pruebas de descargas.</span>
+            <span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">sumarCreditos</span><span class="s3">(</span><span class="s1">idLucca</span><span class="s3">, </span><span class="s5">50</span><span class="s3">);</span>
+
+            <span class="s0">// Avisamos en la consola que el primer perfil fue creado con éxito.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;-&gt; Estudiante 'lucca_dev' inyectado automáticamente con 50 créditos (Hash asegurado).&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos la condición del primer estudiante.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Repetimos la lógica de validación para un segundo usuario de prueba.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s4">&quot;estudiante_pro&quot;</span><span class="s3">) == -</span><span class="s5">1</span><span class="s3">) {</span>
+
+            <span class="s0">// Hasheamos una contraseña distinta para este segundo perfil.</span>
+            <span class="s1">String clavePro </span><span class="s3">= </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">hashpw</span><span class="s3">(</span><span class="s4">&quot;qwerty&quot;</span><span class="s3">, </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">gensalt</span><span class="s3">());</span>
+
+            <span class="s0">// Empaquetamos al segundo estudiante.</span>
+            <span class="s1">Usuario estudiante2 </span><span class="s3">= </span><span class="s2">new </span><span class="s1">Usuario</span><span class="s3">(</span><span class="s4">&quot;estudiante_pro&quot;</span><span class="s3">, </span><span class="s4">&quot;Carlos Tester&quot;</span><span class="s3">, </span><span class="s4">&quot;REG-9999&quot;</span><span class="s3">, </span><span class="s1">clavePro</span><span class="s3">);</span>
+
+            <span class="s0">// Guardamos el registro en la persistencia local.</span>
+            <span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">registrarUsuario</span><span class="s3">(</span><span class="s1">estudiante2</span><span class="s3">);</span>
+
+            <span class="s0">// Avisamos de la creación exitosa.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;-&gt; Estudiante 'estudiante_pro' inyectado automáticamente (Hash asegurado).&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos la condición del segundo estudiante.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Finalizamos el reporte de la consola indicando que el servidor web puede comenzar a recibir tráfico humano.</span>
+        <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;====== SIEMBRA FINALIZADA: SERVIDOR LISTO ======&quot;</span><span class="s3">);</span>
+
+        <span class="s0">// Cerramos el método run() de ejecución autónoma.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la arquitectura general de la clase SembradorDatos.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

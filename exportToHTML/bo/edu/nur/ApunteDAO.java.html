@@ -1,0 +1,149 @@
+<html>
+<head>
+<title>ApunteDAO.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ApunteDAO.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos el paquete estructural al que pertenece esta clase dentro de tu proyecto universitario.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos la herramienta Connection para mantener el túnel abierto con SQLite.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">Connection</span><span class="s3">;</span>
+<span class="s0">// Importamos PreparedStatement para precompilar las consultas y evitar inyecciones de código SQL malicioso.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">PreparedStatement</span><span class="s3">;</span>
+<span class="s0">// Importamos ResultSet para poder leer y navegar por las filas que nos devuelve la base de datos.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">ResultSet</span><span class="s3">;</span>
+<span class="s0">// Importamos SQLException para atrapar cualquier colapso físico o de lectura en el disco duro.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">SQLException</span><span class="s3">;</span>
+<span class="s0">// Importamos la estructura ArrayList para crear listas en la memoria RAM que puedan crecer dinámicamente.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">util</span><span class="s3">.</span><span class="s1">ArrayList</span><span class="s3">;</span>
+<span class="s0">// Importamos la interfaz List para definir el tipo de colección que enviaremos al controlador.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">util</span><span class="s3">.</span><span class="s1">List</span><span class="s3">;</span>
+
+<span class="s0">// Declaramos la clase pública encargada exclusivamente de la lectura y escritura de la tabla Apunte.</span>
+<span class="s2">public class </span><span class="s1">ApunteDAO </span><span class="s3">{</span>
+
+    <span class="s0">// ========================================================================================</span>
+    <span class="s0">// MÉTODO 1: REGISTRAR UN NUEVO APUNTE EN LA BASE DE DATOS</span>
+    <span class="s0">// ========================================================================================</span>
+
+    <span class="s0">// Declaramos un método público y estático que recibe un objeto 'Apunte' armado y retorna un boolean (éxito/fracaso).</span>
+    <span class="s2">public static boolean </span><span class="s1">registrarApunte</span><span class="s3">(</span><span class="s1">Apunte nuevoApunte</span><span class="s3">) {</span>
+
+        <span class="s0">// Redactamos la consulta de inyección SQL definiendo exactamente las cuatro columnas que vamos a llenar.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;INSERT INTO Apunte (titulo, categoria_materia, id_autor, ruta_archivo_fisico) VALUES (?, ?, ?, ?)&quot;</span><span class="s3">;</span>
+
+        <span class="s0">// Abrimos el bloque try-with-resources para conectar a la base de datos de forma segura y efímera.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s0">// Preparamos la sentencia SQL en el motor para inyectar las variables de forma blindada.</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+
+            <span class="s0">// Inyectamos el título del apunte en el primer comodín leyendo el getter del objeto.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">nuevoApunte</span><span class="s3">.</span><span class="s1">getTitulo</span><span class="s3">());</span>
+            <span class="s0">// Inyectamos la categoría académica (ej. &quot;Algebra&quot;) en el segundo comodín.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">2</span><span class="s3">, </span><span class="s1">nuevoApunte</span><span class="s3">.</span><span class="s1">getCategoria</span><span class="s3">());</span>
+            <span class="s0">// Inyectamos el ID numérico del autor en el tercer comodín.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">3</span><span class="s3">, </span><span class="s1">nuevoApunte</span><span class="s3">.</span><span class="s1">getIdAutor</span><span class="s3">());</span>
+            <span class="s0">// Inyectamos la ruta física y el nombre del archivo (con su UUID) en el cuarto comodín.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">4</span><span class="s3">, </span><span class="s1">nuevoApunte</span><span class="s3">.</span><span class="s1">getRutaArchivoFisico</span><span class="s3">());</span>
+
+            <span class="s0">// Ejecutamos la orden de escritura en el disco duro de tu computadora.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeUpdate</span><span class="s3">();</span>
+
+            <span class="s0">// Imprimimos una sonda de telemetría en la consola confirmando la persistencia.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;TELEMETRÍA DAO -&gt; Apunte físico '&quot; </span><span class="s3">+ </span><span class="s1">nuevoApunte</span><span class="s3">.</span><span class="s1">getTitulo</span><span class="s3">() + </span><span class="s4">&quot;' registrado en SQLite.&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// Retornamos verdadero indicando que la operación de guardado fue un éxito absoluto.</span>
+            <span class="s2">return true</span><span class="s3">;</span>
+
+            <span class="s0">// Capturamos cualquier excepción de base de datos (como disco lleno o archivo bloqueado).</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+
+            <span class="s0">// Registramos el error crítico en la consola roja para depurar sin tumbar el servidor de Tomcat.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;ERROR DAO -&gt; Fallo al guardar el apunte en SQLite: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+
+            <span class="s0">// Retornamos falso para que el controlador sepa que la transacción fracasó y no regale los créditos.</span>
+            <span class="s2">return false</span><span class="s3">;</span>
+
+            <span class="s0">// Cerramos el bloque de protección arquitectónica.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Cerramos el método de registro de apuntes.</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// ========================================================================================</span>
+    <span class="s0">// MÉTODO 2: EXTRAER EL CATÁLOGO COMPLETO PARA LA TIENDA VISUAL</span>
+    <span class="s0">// ========================================================================================</span>
+
+    <span class="s0">// Definimos el método público y estático que retornará la Lista estructurada de objetos para Thymeleaf.</span>
+    <span class="s2">public static </span><span class="s1">List</span><span class="s3">&lt;</span><span class="s1">Apunte</span><span class="s3">&gt; </span><span class="s1">obtenerTodosLosApuntes</span><span class="s3">() {</span>
+
+        <span class="s0">// Instanciamos una lista vacía en la memoria RAM para ir apilando los documentos que encontremos.</span>
+        <span class="s1">List</span><span class="s3">&lt;</span><span class="s1">Apunte</span><span class="s3">&gt; </span><span class="s1">listaCatalogo </span><span class="s3">= </span><span class="s2">new </span><span class="s1">ArrayList</span><span class="s3">&lt;&gt;();</span>
+
+        <span class="s0">// Redactamos la consulta SQL de lectura para traer absolutamente todas las filas.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;SELECT * FROM Apunte&quot;</span><span class="s3">;</span>
+
+        <span class="s0">// Abrimos el túnel seguro hacia la bóveda de SQLite usando un bloque autolimpiable.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s0">// Preparamos la sentencia SQL de lectura.</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">);</span>
+             <span class="s0">// Ejecutamos la consulta inmediatamente y capturamos todos los registros resultantes.</span>
+             <span class="s1">ResultSet resultados </span><span class="s3">= </span><span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeQuery</span><span class="s3">()) {</span>
+
+            <span class="s0">// Iniciamos un bucle repetitivo (while) que avanzará fila por fila.</span>
+            <span class="s2">while </span><span class="s3">(</span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">next</span><span class="s3">()) {</span>
+
+                <span class="s0">// Extraemos el título del documento leyendo la columna textual.</span>
+                <span class="s1">String titulo </span><span class="s3">= </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getString</span><span class="s3">(</span><span class="s4">&quot;titulo&quot;</span><span class="s3">);</span>
+                <span class="s0">// Extraemos la categoría académica desde la fila actual.</span>
+                <span class="s1">String categoria </span><span class="s3">= </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getString</span><span class="s3">(</span><span class="s4">&quot;categoria_materia&quot;</span><span class="s3">);</span>
+                <span class="s0">// Extraemos el ID numérico del estudiante que lo subió.</span>
+                <span class="s2">int </span><span class="s1">idAutor </span><span class="s3">= </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getInt</span><span class="s3">(</span><span class="s4">&quot;id_autor&quot;</span><span class="s3">);</span>
+                <span class="s0">// Extraemos la ruta física completa guardada en disco.</span>
+                <span class="s1">String rutaCompleta </span><span class="s3">= </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getString</span><span class="s3">(</span><span class="s4">&quot;ruta_archivo_fisico&quot;</span><span class="s3">);</span>
+
+                <span class="s0">// Limpiamos la ruta removiendo la etiqueta de la carpeta para dejar exclusivamente el nombre del archivo.</span>
+                <span class="s1">String nombreArchivo </span><span class="s3">= </span><span class="s1">rutaCompleta</span><span class="s3">.</span><span class="s1">replace</span><span class="s3">(</span><span class="s4">&quot;repositorio_nur/&quot;</span><span class="s3">, </span><span class="s4">&quot;&quot;</span><span class="s3">);</span>
+
+                <span class="s0">// Instanciamos un nuevo objeto Apunte en la RAM usando el constructor con los datos extraídos.</span>
+                <span class="s1">Apunte apunteRecuperado </span><span class="s3">= </span><span class="s2">new </span><span class="s1">Apunte</span><span class="s3">(</span><span class="s1">titulo</span><span class="s3">, </span><span class="s1">categoria</span><span class="s3">, </span><span class="s1">idAutor</span><span class="s3">, </span><span class="s1">nombreArchivo</span><span class="s3">);</span>
+
+                <span class="s0">// Inyectamos este objeto armado al final de nuestra lista maestra.</span>
+                <span class="s1">listaCatalogo</span><span class="s3">.</span><span class="s1">add</span><span class="s3">(</span><span class="s1">apunteRecuperado</span><span class="s3">);</span>
+
+                <span class="s0">// Cerramos el bucle de recolección de filas.</span>
+            <span class="s3">}</span>
+
+            <span class="s0">// Capturamos cualquier colapso de lectura en el archivo .db.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+
+            <span class="s0">// Imprimimos el error crítico en la consola para alertarnos de la falla.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;ERROR DAO -&gt; Fallo masivo al cargar el catálogo de apuntes: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+
+            <span class="s0">// Cerramos el bloque de contingencia.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Retornamos la lista completa al ControladorDashboard.</span>
+        <span class="s2">return </span><span class="s1">listaCatalogo</span><span class="s3">;</span>
+
+        <span class="s0">// Cerramos el método de extracción del catálogo.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la arquitectura completa de la clase ApunteDAO.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

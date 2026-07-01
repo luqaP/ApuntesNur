@@ -1,0 +1,43 @@
+<html>
+<head>
+<title>Main.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Main.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos que esta clase pertenece al paquete principal de la universidad para evitar el escaneo global.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos la clase SpringApplication para levantar el servidor web en memoria.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">boot</span><span class="s3">.</span><span class="s1">SpringApplication</span><span class="s3">;</span>
+<span class="s0">// Importamos la anotación SpringBootApplication para orquestar los componentes del proyecto.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">boot</span><span class="s3">.</span><span class="s1">autoconfigure</span><span class="s3">.</span><span class="s1">SpringBootApplication</span><span class="s3">;</span>
+<span class="s0">// Importamos la clase DataSourceAutoConfiguration para poder referenciarla y apagarla.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">boot</span><span class="s3">.</span><span class="s1">autoconfigure</span><span class="s3">.</span><span class="s1">jdbc</span><span class="s3">.</span><span class="s1">DataSourceAutoConfiguration</span><span class="s3">;</span>
+
+<span class="s0">// Inyectamos la anotación maestra, pero le agregamos el parámetro &quot;exclude&quot; para apagar la auto-conexión a la base de datos.</span>
+<span class="s0">// Esto obliga a Spring Boot a respetar nuestra clase ConexionDB manual.</span>
+<span class="s1">@SpringBootApplication</span><span class="s3">(</span><span class="s1">exclude </span><span class="s3">= {</span><span class="s1">DataSourceAutoConfiguration</span><span class="s3">.</span><span class="s2">class</span><span class="s3">})</span>
+<span class="s2">public class </span><span class="s1">Main </span><span class="s3">{</span>
+
+    <span class="s0">// Declaramos el método principal de ejecución.</span>
+    <span class="s2">public static void </span><span class="s1">main</span><span class="s3">(</span><span class="s1">String</span><span class="s3">[] </span><span class="s1">args</span><span class="s3">) {</span>
+        <span class="s0">// Ejecutamos el servidor web aislado de los conflictos de base de datos.</span>
+        <span class="s1">SpringApplication</span><span class="s3">.</span><span class="s1">run</span><span class="s3">(</span><span class="s1">Main</span><span class="s3">.</span><span class="s2">class</span><span class="s3">, </span><span class="s1">args</span><span class="s3">);</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método main.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la declaración general de tu clase Main.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

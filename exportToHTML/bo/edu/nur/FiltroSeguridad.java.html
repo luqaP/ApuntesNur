@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>FiltroSeguridad.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+FiltroSeguridad.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos el paquete oficial de nuestra universidad.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos Component para que Spring Boot active este filtro automáticamente al encender el servidor.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">stereotype</span><span class="s3">.</span><span class="s1">Component</span><span class="s3">;</span>
+<span class="s0">// Importamos la interfaz Filter de Jakarta para interceptar las peticiones antes de que lleguen a los archivos.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">Filter</span><span class="s3">;</span>
+<span class="s0">// Importamos FilterChain para permitir que la petición continúe su camino si todo está en orden.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">FilterChain</span><span class="s3">;</span>
+<span class="s0">// Importamos ServletRequest para leer la petición entrante cruda.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">ServletRequest</span><span class="s3">;</span>
+<span class="s0">// Importamos ServletResponse para poder emitir bloqueos o redirecciones de salida.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">ServletResponse</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpServletRequest para extraer la URL exacta a la que intenta acceder el usuario.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpServletRequest</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpServletResponse para ejecutar la orden de expulsión si es necesario.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpServletResponse</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpSession para revisar si el usuario tiene su tarjeta de identificación.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpSession</span><span class="s3">;</span>
+<span class="s0">// Importamos IOException y ServletException para manejar fallas críticas en la intercepción.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">io</span><span class="s3">.</span><span class="s1">IOException</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">ServletException</span><span class="s3">;</span>
+
+<span class="s0">// Usamos @Component para registrar obligatoriamente este guardia de seguridad en el núcleo de Spring Boot.</span>
+<span class="s1">@Component</span>
+<span class="s0">// Declaramos la clase FiltroSeguridad implementando la interfaz nativa Filter.</span>
+<span class="s2">public class </span><span class="s1">FiltroSeguridad </span><span class="s2">implements </span><span class="s1">Filter </span><span class="s3">{</span>
+
+    <span class="s0">// Sobrescribimos el método principal doFilter que se ejecuta en cada milisegundo que alguien pide un archivo.</span>
+    <span class="s1">@Override</span>
+    <span class="s2">public void </span><span class="s1">doFilter</span><span class="s3">(</span><span class="s1">ServletRequest peticion</span><span class="s3">, </span><span class="s1">ServletResponse respuesta</span><span class="s3">, </span><span class="s1">FilterChain cadena</span><span class="s3">) </span><span class="s2">throws </span><span class="s1">IOException</span><span class="s3">, </span><span class="s1">ServletException </span><span class="s3">{</span>
+        <span class="s0">// Convertimos la petición cruda a HttpServletRequest para acceder a funciones web avanzadas.</span>
+        <span class="s1">HttpServletRequest req </span><span class="s3">= (</span><span class="s1">HttpServletRequest</span><span class="s3">) </span><span class="s1">peticion</span><span class="s3">;</span>
+        <span class="s0">// Convertimos la respuesta cruda a HttpServletResponse para poder redirigir.</span>
+        <span class="s1">HttpServletResponse res </span><span class="s3">= (</span><span class="s1">HttpServletResponse</span><span class="s3">) </span><span class="s1">respuesta</span><span class="s3">;</span>
+        <span class="s0">// Extraemos exactamente qué archivo HTML está intentando abrir el estudiante.</span>
+        <span class="s1">String ruta </span><span class="s3">= </span><span class="s1">req</span><span class="s3">.</span><span class="s1">getRequestURI</span><span class="s3">();</span>
+
+        <span class="s0">// Verificamos de forma estricta si la ruta solicitada es nuestra tienda protegida.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">ruta</span><span class="s3">.</span><span class="s1">equals</span><span class="s3">(</span><span class="s4">&quot;/dashboard.html&quot;</span><span class="s3">)) {</span>
+            <span class="s0">// Solicitamos la sesión actual, enviando 'false' para que NO cree una nueva si no existe.</span>
+            <span class="s1">HttpSession sesion </span><span class="s3">= </span><span class="s1">req</span><span class="s3">.</span><span class="s1">getSession</span><span class="s3">(</span><span class="s2">false</span><span class="s3">);</span>
+            <span class="s0">// Evaluamos si no hay sesión activa, o si la sesión existe pero no tiene la llave de &quot;usuarioLogueado&quot;.</span>
+            <span class="s2">if </span><span class="s3">(</span><span class="s1">sesion </span><span class="s3">== </span><span class="s2">null </span><span class="s3">|| </span><span class="s1">sesion</span><span class="s3">.</span><span class="s1">getAttribute</span><span class="s3">(</span><span class="s4">&quot;usuarioLogueado&quot;</span><span class="s3">) == </span><span class="s2">null</span><span class="s3">) {</span>
+                <span class="s0">// Al detectar al intruso, bloqueamos el acceso y lo redirigimos obligatoriamente al login.</span>
+                <span class="s1">res</span><span class="s3">.</span><span class="s1">sendRedirect</span><span class="s3">(</span><span class="s4">&quot;/&quot;</span><span class="s3">);</span>
+                <span class="s0">// Usamos 'return' para abortar inmediatamente la ejecución del código restante.</span>
+                <span class="s2">return</span><span class="s3">;</span>
+                <span class="s0">// Cerramos la validación de intrusión.</span>
+            <span class="s3">}</span>
+            <span class="s0">// Cerramos el análisis de la ruta objetivo.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Si no es el dashboard, o si el usuario sí estaba logueado, dejamos que el servidor procese la petición normalmente.</span>
+        <span class="s1">cadena</span><span class="s3">.</span><span class="s1">doFilter</span><span class="s3">(</span><span class="s1">peticion</span><span class="s3">, </span><span class="s1">respuesta</span><span class="s3">);</span>
+        <span class="s0">// Cerramos el bloque de ejecución del filtro principal.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la declaración del componente de seguridad.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

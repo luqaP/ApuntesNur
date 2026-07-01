@@ -1,0 +1,67 @@
+<html>
+<head>
+<title>ControladorLogin.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ControladorLogin.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos la pertenencia estricta de la clase al paquete de nuestro proyecto.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos RestController para habilitar la recepción de peticiones web.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RestController</span><span class="s3">;</span>
+<span class="s0">// Importamos PostMapping para interceptar los datos enviados por el formulario HTML.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">PostMapping</span><span class="s3">;</span>
+<span class="s0">// Importamos RequestParam para extraer los campos de texto del usuario y la contraseña.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RequestParam</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpSession nativo de Jakarta para crear una &quot;memoria temporal&quot; que recuerde al usuario.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpSession</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpServletResponse para poder darle órdenes directas al navegador web (como redirigir).</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpServletResponse</span><span class="s3">;</span>
+<span class="s0">// Importamos IOException para manejar errores si la redirección de red falla.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">io</span><span class="s3">.</span><span class="s1">IOException</span><span class="s3">;</span>
+
+<span class="s0">// Inyectamos la anotación para que Spring despierte este controlador.</span>
+<span class="s1">@RestController</span>
+<span class="s0">// Declaramos la clase pública que gestionará el inicio de sesión.</span>
+<span class="s2">public class </span><span class="s1">ControladorLogin </span><span class="s3">{</span>
+
+    <span class="s0">// Escuchamos la ruta &quot;/login&quot; proveniente del archivo index.html.</span>
+    <span class="s1">@PostMapping</span><span class="s3">(</span><span class="s4">&quot;/login&quot;</span><span class="s3">)</span>
+    <span class="s0">// Declaramos el método, ahora inyectando 'HttpSession' y 'HttpServletResponse' para manipular la navegación.</span>
+    <span class="s2">public void </span><span class="s1">procesarAcceso</span><span class="s3">(</span><span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;aliasUsuario&quot;</span><span class="s3">) </span><span class="s1">String alias</span><span class="s3">,</span>
+                               <span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;claveUsuario&quot;</span><span class="s3">) </span><span class="s1">String clave</span><span class="s3">,</span>
+                               <span class="s1">HttpSession sesion</span><span class="s3">,</span>
+                               <span class="s1">HttpServletResponse respuesta</span><span class="s3">) </span><span class="s2">throws </span><span class="s1">IOException </span><span class="s3">{</span>
+
+        <span class="s0">// Invocamos a tu DAO para verificar matemáticamente si las credenciales coinciden en SQLite.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">validarCredenciales</span><span class="s3">(</span><span class="s1">alias</span><span class="s3">, </span><span class="s1">clave</span><span class="s3">)) {</span>
+            <span class="s0">// Si es exitoso, guardamos el alias en la memoria RAM del servidor (Sesión) bajo la llave &quot;usuarioLogueado&quot;.</span>
+            <span class="s1">sesion</span><span class="s3">.</span><span class="s1">setAttribute</span><span class="s3">(</span><span class="s4">&quot;usuarioLogueado&quot;</span><span class="s3">, </span><span class="s1">alias</span><span class="s3">);</span>
+            <span class="s0">// Ejecutamos una redirección automática forzando al navegador a cargar el Dashboard.</span>
+            <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">sendRedirect</span><span class="s3">(</span><span class="s4">&quot;/dashboard&quot;</span><span class="s3">);</span>
+            <span class="s0">// Abrimos la condición por si el usuario se equivoca o intenta entrar por fuerza bruta.</span>
+        <span class="s3">} </span><span class="s2">else </span><span class="s3">{</span>
+            <span class="s0">// Si falla, lo expulsamos redirigiéndolo de vuelta a la pantalla de inicio (raíz).</span>
+            <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">sendRedirect</span><span class="s3">(</span><span class="s4">&quot;/&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos el bloque condicional de validación.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Cerramos la ejecución del método de acceso.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la arquitectura general de la clase ControladorLogin.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<html>
+<head>
+<title>ControladorApunte.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ControladorApunte.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">bo</span><span class="s2">.</span><span class="s1">edu</span><span class="s2">.</span><span class="s1">nur</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">io</span><span class="s2">.</span><span class="s1">File</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">io</span><span class="s2">.</span><span class="s1">IOException</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">nio</span><span class="s2">.</span><span class="s1">file</span><span class="s2">.</span><span class="s1">Files</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">nio</span><span class="s2">.</span><span class="s1">file</span><span class="s2">.</span><span class="s1">Path</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">nio</span><span class="s2">.</span><span class="s1">file</span><span class="s2">.</span><span class="s1">Paths</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">nio</span><span class="s2">.</span><span class="s1">file</span><span class="s2">.</span><span class="s1">StandardCopyOption</span><span class="s2">;</span>
+<span class="s3">// Importamos la librería nativa para generar Identificadores Únicos Universales matemáticos.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">util</span><span class="s2">.</span><span class="s1">UUID</span><span class="s2">;</span>
+
+<span class="s0">import </span><span class="s1">org</span><span class="s2">.</span><span class="s1">springframework</span><span class="s2">.</span><span class="s1">web</span><span class="s2">.</span><span class="s1">bind</span><span class="s2">.</span><span class="s1">annotation</span><span class="s2">.</span><span class="s1">RestController</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">org</span><span class="s2">.</span><span class="s1">springframework</span><span class="s2">.</span><span class="s1">web</span><span class="s2">.</span><span class="s1">bind</span><span class="s2">.</span><span class="s1">annotation</span><span class="s2">.</span><span class="s1">PostMapping</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">org</span><span class="s2">.</span><span class="s1">springframework</span><span class="s2">.</span><span class="s1">web</span><span class="s2">.</span><span class="s1">bind</span><span class="s2">.</span><span class="s1">annotation</span><span class="s2">.</span><span class="s1">RequestParam</span><span class="s2">;</span>
+<span class="s0">import </span><span class="s1">org</span><span class="s2">.</span><span class="s1">springframework</span><span class="s2">.</span><span class="s1">web</span><span class="s2">.</span><span class="s1">multipart</span><span class="s2">.</span><span class="s1">MultipartFile</span><span class="s2">;</span>
+<span class="s3">// Importamos la clase de Sesión para verificar la identidad del estudiante que sube el archivo.</span>
+<span class="s0">import </span><span class="s1">jakarta</span><span class="s2">.</span><span class="s1">servlet</span><span class="s2">.</span><span class="s1">http</span><span class="s2">.</span><span class="s1">HttpSession</span><span class="s2">;</span>
+
+<span class="s1">@RestController</span>
+<span class="s0">public class </span><span class="s1">ControladorApunte </span><span class="s2">{</span>
+
+    <span class="s1">@PostMapping</span><span class="s2">(</span><span class="s4">&quot;/subir-apunte&quot;</span><span class="s2">)</span>
+    <span class="s3">// Inyectamos HttpSession en el método para acceder a la identidad del usuario logueado.</span>
+    <span class="s0">public </span><span class="s1">String procesarSubida</span><span class="s2">(</span><span class="s1">@RequestParam</span><span class="s2">(</span><span class="s4">&quot;tituloApunte&quot;</span><span class="s2">) </span><span class="s1">String titulo</span><span class="s2">,</span>
+                                 <span class="s1">@RequestParam</span><span class="s2">(</span><span class="s4">&quot;categoriaMateria&quot;</span><span class="s2">) </span><span class="s1">String categoria</span><span class="s2">,</span>
+                                 <span class="s1">@RequestParam</span><span class="s2">(</span><span class="s4">&quot;archivoFisico&quot;</span><span class="s2">) </span><span class="s1">MultipartFile archivo</span><span class="s2">,</span>
+                                 <span class="s1">HttpSession sesion</span><span class="s2">) {</span>
+
+        <span class="s3">// Paso A: VERIFICACIÓN DE IDENTIDAD Y FRAUDE</span>
+        <span class="s3">// Comprobamos si el usuario se saltó el login forzando la petición HTTP.</span>
+        <span class="s1">String aliasUsuario </span><span class="s2">= (</span><span class="s1">String</span><span class="s2">) </span><span class="s1">sesion</span><span class="s2">.</span><span class="s1">getAttribute</span><span class="s2">(</span><span class="s4">&quot;usuarioLogueado&quot;</span><span class="s2">);</span>
+        <span class="s0">if </span><span class="s2">(</span><span class="s1">aliasUsuario </span><span class="s2">== </span><span class="s0">null</span><span class="s2">) {</span>
+            <span class="s0">return </span><span class="s4">&quot;&lt;h2&gt;Acceso Denegado&lt;/h2&gt;&lt;p&gt;Debes iniciar sesión para subir apuntes.&lt;/p&gt;&quot;</span><span class="s2">;</span>
+        <span class="s2">}</span>
+
+        <span class="s3">// Filtramos archivos vacíos o extremadamente pequeños para evitar el farmeo de créditos.</span>
+        <span class="s0">if </span><span class="s2">(</span><span class="s1">archivo</span><span class="s2">.</span><span class="s1">isEmpty</span><span class="s2">() || </span><span class="s1">archivo</span><span class="s2">.</span><span class="s1">getSize</span><span class="s2">() &lt; </span><span class="s5">50</span><span class="s2">) {</span>
+            <span class="s0">return </span><span class="s4">&quot;&lt;h2&gt;Fraude Detectado&lt;/h2&gt;&lt;p&gt;El archivo es inválido o está vacío.&lt;/p&gt;&quot;</span><span class="s2">;</span>
+        <span class="s2">}</span>
+
+        <span class="s1">String nombreOriginal </span><span class="s2">= </span><span class="s1">archivo</span><span class="s2">.</span><span class="s1">getOriginalFilename</span><span class="s2">();</span>
+        <span class="s0">if </span><span class="s2">(</span><span class="s1">nombreOriginal </span><span class="s2">== </span><span class="s0">null </span><span class="s2">|| (!</span><span class="s1">nombreOriginal</span><span class="s2">.</span><span class="s1">toLowerCase</span><span class="s2">().</span><span class="s1">endsWith</span><span class="s2">(</span><span class="s4">&quot;.md&quot;</span><span class="s2">) &amp;&amp; !</span><span class="s1">nombreOriginal</span><span class="s2">.</span><span class="s1">toLowerCase</span><span class="s2">().</span><span class="s1">endsWith</span><span class="s2">(</span><span class="s4">&quot;.pdf&quot;</span><span class="s2">))) {</span>
+            <span class="s0">return </span><span class="s4">&quot;&lt;h2&gt;Formato Inválido&lt;/h2&gt;&lt;p&gt;Solo se permiten archivos Markdown (.md) y PDF.&lt;/p&gt;&quot;</span><span class="s2">;</span>
+        <span class="s2">}</span>
+
+        <span class="s3">// Paso B: ELIMINACIÓN DE COLISIÓN DE NOMBRES (BUG 2 FIX)</span>
+        <span class="s3">// Generamos un código UUID aleatorio (ej. &quot;550e8400-e29b-41d4-a716-446655440000&quot;).</span>
+        <span class="s1">String codigoUnico </span><span class="s2">= </span><span class="s1">UUID</span><span class="s2">.</span><span class="s1">randomUUID</span><span class="s2">().</span><span class="s1">toString</span><span class="s2">();</span>
+        <span class="s3">// Concatenamos el código con el nombre original (ej. &quot;550e..._calculo.md&quot;). ¡Imposible que se repita!</span>
+        <span class="s1">String nombreSeguro </span><span class="s2">= </span><span class="s1">codigoUnico </span><span class="s2">+ </span><span class="s4">&quot;_&quot; </span><span class="s2">+ </span><span class="s1">nombreOriginal</span><span class="s2">;</span>
+
+        <span class="s0">try </span><span class="s2">{</span>
+            <span class="s3">// Paso C: PERSISTENCIA FÍSICA EN DISCO DURO</span>
+            <span class="s1">String nombreCarpeta </span><span class="s2">= </span><span class="s4">&quot;repositorio_nur/&quot;</span><span class="s2">;</span>
+            <span class="s1">File directorioDestino </span><span class="s2">= </span><span class="s0">new </span><span class="s1">File</span><span class="s2">(</span><span class="s1">nombreCarpeta</span><span class="s2">);</span>
+            <span class="s0">if </span><span class="s2">(!</span><span class="s1">directorioDestino</span><span class="s2">.</span><span class="s1">exists</span><span class="s2">()) {</span>
+                <span class="s1">directorioDestino</span><span class="s2">.</span><span class="s1">mkdirs</span><span class="s2">();</span>
+            <span class="s2">}</span>
+
+            <span class="s3">// Utilizamos el nuevo nombre seguro para guardar el archivo físico en Windows.</span>
+            <span class="s1">Path rutaFinal </span><span class="s2">= </span><span class="s1">Paths</span><span class="s2">.</span><span class="s1">get</span><span class="s2">(</span><span class="s1">nombreCarpeta </span><span class="s2">+ </span><span class="s1">nombreSeguro</span><span class="s2">);</span>
+            <span class="s1">Files</span><span class="s2">.</span><span class="s1">copy</span><span class="s2">(</span><span class="s1">archivo</span><span class="s2">.</span><span class="s1">getInputStream</span><span class="s2">(), </span><span class="s1">rutaFinal</span><span class="s2">, </span><span class="s1">StandardCopyOption</span><span class="s2">.</span><span class="s1">REPLACE_EXISTING</span><span class="s2">);</span>
+
+            <span class="s3">// Paso D: PERSISTENCIA LÓGICA Y ECONOMÍA</span>
+            <span class="s3">// Transformamos el alias de la sesión en un ID numérico usando nuestro nuevo método.</span>
+            <span class="s0">int </span><span class="s1">idAutor </span><span class="s2">= </span><span class="s1">UsuarioDAO</span><span class="s2">.</span><span class="s1">obtenerIdPorAlias</span><span class="s2">(</span><span class="s1">aliasUsuario</span><span class="s2">);</span>
+
+            <span class="s3">// Si el ID es válido, armamos el objeto de Java.</span>
+            <span class="s0">if </span><span class="s2">(</span><span class="s1">idAutor </span><span class="s2">!= -</span><span class="s5">1</span><span class="s2">) {</span>
+                <span class="s3">// Instanciamos el modelo matemático del apunte.</span>
+                <span class="s1">Apunte documento </span><span class="s2">= </span><span class="s0">new </span><span class="s1">Apunte</span><span class="s2">(</span><span class="s1">titulo</span><span class="s2">, </span><span class="s1">categoria</span><span class="s2">, </span><span class="s1">idAutor</span><span class="s2">, </span><span class="s1">rutaFinal</span><span class="s2">.</span><span class="s1">toString</span><span class="s2">());</span>
+                <span class="s3">// Invocamos al puente DAO para escribir la fila en SQLite.</span>
+                <span class="s1">ApunteDAO</span><span class="s2">.</span><span class="s1">registrarApunte</span><span class="s2">(</span><span class="s1">documento</span><span class="s2">);</span>
+
+                <span class="s3">// Le otorgamos al estudiante la recompensa por su aporte solidario.</span>
+                <span class="s1">UsuarioDAO</span><span class="s2">.</span><span class="s1">sumarCreditos</span><span class="s2">(</span><span class="s1">idAutor</span><span class="s2">, </span><span class="s1">MotorEconomia</span><span class="s2">.</span><span class="s1">RECOMPENSA_SUBIDA</span><span class="s2">);</span>
+            <span class="s2">}</span>
+
+            <span class="s0">return </span><span class="s4">&quot;&lt;h2&gt;¡Aporte Validado!&lt;/h2&gt;&lt;p&gt;Tu archivo fue asegurado bajo el código &quot; </span><span class="s2">+ </span><span class="s1">codigoUnico</span><span class="s2">.</span><span class="s1">substring</span><span class="s2">(</span><span class="s5">0</span><span class="s2">,</span><span class="s5">8</span><span class="s2">) + </span><span class="s4">&quot;. ¡Ganaste &quot; </span><span class="s2">+ </span><span class="s1">MotorEconomia</span><span class="s2">.</span><span class="s1">RECOMPENSA_SUBIDA </span><span class="s2">+ </span><span class="s4">&quot; créditos!&lt;/p&gt;&lt;br&gt;&lt;a href='/dashboard.html'&gt;Volver a la Tienda&lt;/a&gt;&quot;</span><span class="s2">;</span>
+
+        <span class="s2">} </span><span class="s0">catch </span><span class="s2">(</span><span class="s1">IOException e</span><span class="s2">) {</span>
+            <span class="s1">System</span><span class="s2">.</span><span class="s1">out</span><span class="s2">.</span><span class="s1">println</span><span class="s2">(</span><span class="s4">&quot;Error físico al escribir: &quot; </span><span class="s2">+ </span><span class="s1">e</span><span class="s2">.</span><span class="s1">getMessage</span><span class="s2">());</span>
+            <span class="s0">return </span><span class="s4">&quot;&lt;h2&gt;Fallo del Servidor&lt;/h2&gt;&lt;p&gt;No se pudo almacenar el documento físico.&lt;/p&gt;&quot;</span><span class="s2">;</span>
+        <span class="s2">}</span>
+    <span class="s2">}</span>
+<span class="s2">}</span></pre>
+</body>
+</html>

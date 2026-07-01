@@ -290,6 +290,82 @@ public class UsuarioDAO {
         }
         // Cerramos la función de cobro.
     }
+    // ========================================================================================
+    // MÉTODOS DE DESTRUCCIÓN Y LIMPIEZA (ZONA DE PELIGRO)
+    // ========================================================================================
+
+    // Declaramos el método público y estático para aniquilar a un usuario específico mediante su llave primaria.
+    public static boolean eliminarUsuarioPorId(int idUsuario) {
+
+        // Redactamos la instrucción SQL DML ordenando el borrado de la fila que coincida estrictamente con el ID.
+        String sql = "DELETE FROM Usuario WHERE id_usuario = ?";
+
+        // Abrimos el túnel de conexión transaccional con la base de datos local SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia destructiva para bloquear cualquier intento de inyección de código.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el número de identificación del estudiante en el comodín de la sentencia.
+            declaracion.setInt(1, idUsuario);
+
+            // Ejecutamos la orden de aniquilación en el disco duro y capturamos la cantidad de filas afectadas.
+            int filasBorradas = declaracion.executeUpdate();
+
+            // Imprimimos en la consola de diagnóstico la confirmación de la limpieza por motivos de auditoría.
+            System.out.println("AUDITORÍA DAO -> Se ordenó la eliminación del usuario ID: " + idUsuario);
+
+            // Retornamos verdadero si el motor relacional confirmó la destrucción de al menos un registro (filasBorradas > 0).
+            return filasBorradas > 0;
+
+            // Capturamos cualquier bloqueo físico o error estructural emitido por el archivo .db.
+        } catch (SQLException e) {
+
+            // Imprimimos la traza del error crítico en la terminal para evaluar por qué falló la eliminación.
+            System.out.println("ERROR DAO -> Fallo masivo al intentar eliminar el usuario: " + e.getMessage());
+
+            // Retornamos falso indicando al controlador que la operación de limpieza fracasó rotundamente.
+            return false;
+
+            // Cerramos el bloque de contingencia y protección.
+        }
+
+        // Cerramos la arquitectura del método destructor individual.
+    }
+
+    // Declaramos un método extremo para limpiar absolutamente todos los usuarios (Útil solo en fase de pruebas).
+    public static boolean limpiarTodosLosUsuarios() {
+
+        // Redactamos la instrucción de borrado masivo sin condicionales (Peligro: Borrará la tabla entera).
+        String sql = "DELETE FROM Usuario";
+
+        // Establecemos el conducto temporal hacia el archivo de SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la orden de ejecución masiva.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Ejecutamos la orden sin inyectar parámetros, barriendo con todos los registros.
+            declaracion.executeUpdate();
+
+            // Emitimos una alerta roja en la consola notificando la purga total del sistema.
+            System.out.println("ALERTA DAO -> La tabla Usuario ha sido purgada por completo.");
+
+            // Retornamos éxito absoluto en la transacción.
+            return true;
+
+            // Atrapamos colisiones de disco.
+        } catch (SQLException e) {
+
+            // Documentamos el colapso del intento de purga.
+            System.out.println("ERROR DAO -> Falla al intentar vaciar la tabla de usuarios: " + e.getMessage());
+
+            // Retornamos fracaso transaccional.
+            return false;
+
+            // Cerramos la captura de errores.
+        }
+
+        // Cerramos el método de purga global.
+    }
 
 // Cerramos de manera concluyente la arquitectura de la clase UsuarioDAO.
 }

@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>Usuario.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+Usuario.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos que esta clase pertenece al paquete principal de tu proyecto universitario para que Spring Boot la reconozca.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos la clase LocalDate nativa de Java para manejar de forma profesional y matemática las fechas de acceso del estudiante.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">time</span><span class="s3">.</span><span class="s1">LocalDate</span><span class="s3">;</span>
+
+<span class="s0">// Declaramos la clase pública Usuario que servirá como la plantilla o molde exacto para crear a los estudiantes en la memoria RAM.</span>
+<span class="s2">public class </span><span class="s1">Usuario </span><span class="s3">{</span>
+
+    <span class="s0">// Declaramos el atributo privado de tipo texto para almacenar el alias único del estudiante en la plataforma.</span>
+    <span class="s2">private </span><span class="s1">String nombreUsuario</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado de tipo texto para guardar el nombre real y completo del usuario.</span>
+    <span class="s2">private </span><span class="s1">String nombreCompleto</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado de tipo texto para el número de registro o matrícula oficial de la universidad.</span>
+    <span class="s2">private </span><span class="s1">String numeroCredencial</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado de tipo texto para resguardar la contraseña de acceso (idealmente encriptada a futuro).</span>
+    <span class="s2">private </span><span class="s1">String contrasena</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado y numérico entero para manejar el saldo de la economía y descargas virtuales.</span>
+    <span class="s2">private int </span><span class="s1">creditosVirtuales</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado y numérico entero para contar los días consecutivos que el estudiante inicia sesión.</span>
+    <span class="s2">private int </span><span class="s1">rachaDiaria</span><span class="s3">;</span>
+    <span class="s0">// Declaramos el atributo privado de tipo LocalDate para registrar con precisión de calendario la última vez que el estudiante entró.</span>
+    <span class="s2">private </span><span class="s1">LocalDate fechaUltimoAcceso</span><span class="s3">;</span>
+
+    <span class="s0">// Definimos el constructor principal que exige los cuatro datos vitales cada vez que instanciemos un nuevo estudiante con la palabra reservada 'new'.</span>
+    <span class="s2">public </span><span class="s1">Usuario</span><span class="s3">(</span><span class="s1">String alias</span><span class="s3">, </span><span class="s1">String nombre</span><span class="s3">, </span><span class="s1">String credencial</span><span class="s3">, </span><span class="s1">String clave</span><span class="s3">) {</span>
+        <span class="s0">// Asignamos el valor del parámetro 'alias' al atributo interno de la clase utilizando 'this' para evitar ambigüedades.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">nombreUsuario </span><span class="s3">= </span><span class="s1">alias</span><span class="s3">;</span>
+        <span class="s0">// Asignamos el valor del parámetro 'nombre' al atributo persistente de nombre completo.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">nombreCompleto </span><span class="s3">= </span><span class="s1">nombre</span><span class="s3">;</span>
+        <span class="s0">// Asignamos el número de matrícula provisto al atributo de la credencial universitaria.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">numeroCredencial </span><span class="s3">= </span><span class="s1">credencial</span><span class="s3">;</span>
+        <span class="s0">// Asignamos la contraseña recibida al atributo privado de seguridad de la instancia.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">contrasena </span><span class="s3">= </span><span class="s1">clave</span><span class="s3">;</span>
+        <span class="s0">// Inicializamos los créditos virtuales estrictamente en 0 por defecto al momento de un nuevo registro.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">creditosVirtuales </span><span class="s3">= </span><span class="s4">0</span><span class="s3">;</span>
+        <span class="s0">// Inicializamos la racha diaria en 0 por defecto, ya que es el primer día de vida de este usuario.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">rachaDiaria </span><span class="s3">= </span><span class="s4">0</span><span class="s3">;</span>
+        <span class="s0">// Invocamos el método estático now() para capturar la fecha exacta del reloj del sistema operativo y la guardamos.</span>
+        <span class="s2">this</span><span class="s3">.</span><span class="s1">fechaUltimoAcceso </span><span class="s3">= </span><span class="s1">LocalDate</span><span class="s3">.</span><span class="s1">now</span><span class="s3">();</span>
+        <span class="s0">// Cerramos el bloque de ejecución estricto del método constructor.</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna texto (String) para que otras clases externas consulten el nombre de usuario.</span>
+    <span class="s2">public </span><span class="s1">String obtenerNombreUsuario</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos el valor almacenado en el atributo privado nombreUsuario de esta instancia específica.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">nombreUsuario</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerNombreUsuario().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna texto para permitir el acceso de lectura al nombre completo del estudiante.</span>
+    <span class="s2">public </span><span class="s1">String obtenerNombreCompleto</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos la cadena de texto almacenada de forma segura en el atributo privado nombreCompleto.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">nombreCompleto</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerNombreCompleto().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna texto para consultar la matrícula universitaria de la NUR.</span>
+    <span class="s2">public </span><span class="s1">String obtenerNumeroCredencial</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos el valor del atributo privado numeroCredencial, el cual está diseñado para soportar valores nulos si el usuario es externo.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">numeroCredencial</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerNumeroCredencial().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna texto para recuperar la clave de acceso del usuario.</span>
+    <span class="s2">public </span><span class="s1">String obtenerContrasena</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos el contenido del atributo privado contrasena para que el UsuarioDAO pueda validarlo contra la base de datos.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">contrasena</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerContrasena().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna un entero primitivo (int) para consultar la cartera virtual del estudiante.</span>
+    <span class="s2">public int </span><span class="s1">obtenerCreditos</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos el valor numérico exacto almacenado en el atributo privado creditosVirtuales.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">creditosVirtuales</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerCreditos().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna un entero primitivo para auditar la racha de días consecutivos.</span>
+    <span class="s2">public int </span><span class="s1">obtenerRachaDiaria</span><span class="s3">() {</span>
+        <span class="s0">// Retornamos el valor numérico persistido en el atributo privado rachaDiaria.</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">rachaDiaria</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerRachaDiaria().</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// Definimos un método público que retorna la fecha convertida explícitamente a texto para garantizar compatibilidad con el motor de SQLite.</span>
+    <span class="s2">public </span><span class="s1">String obtenerFechaUltimoAccesoComoTexto</span><span class="s3">() {</span>
+        <span class="s0">// Invocamos el método nativo toString() del objeto LocalDate para transformar la estructura de fecha en un formato de texto estándar (YYYY-MM-DD).</span>
+        <span class="s2">return this</span><span class="s3">.</span><span class="s1">fechaUltimoAcceso</span><span class="s3">.</span><span class="s1">toString</span><span class="s3">();</span>
+        <span class="s0">// Cerramos el bloque de ejecución del método obtenerFechaUltimoAccesoComoTexto().</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la declaración estructural y encapsulada de tu clase Usuario completa.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

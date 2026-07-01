@@ -1,0 +1,118 @@
+<html>
+<head>
+<title>ControladorDescarga.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ControladorDescarga.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Definimos el paquete arquitectónico de la universidad.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos GetMapping porque las descargas en los navegadores se ejecutan mediante peticiones GET.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">GetMapping</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RequestParam</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RestController</span><span class="s3">;</span>
+<span class="s0">// Importamos ResponseEntity para poder devolver un archivo físico en lugar de texto o HTML.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">ResponseEntity</span><span class="s3">;</span>
+<span class="s0">// Importamos HttpHeaders para decirle a Google Chrome &quot;¡Oye, esto es un archivo, descárgalo!&quot;.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpHeaders</span><span class="s3">;</span>
+<span class="s0">// Importamos MediaType para definir que enviaremos un flujo de bytes genéricos.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">MediaType</span><span class="s3">;</span>
+<span class="s0">// Importamos Resource y UrlResource para mapear el archivo del disco duro hacia la red.</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">core</span><span class="s3">.</span><span class="s1">io</span><span class="s3">.</span><span class="s1">Resource</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">core</span><span class="s3">.</span><span class="s1">io</span><span class="s3">.</span><span class="s1">UrlResource</span><span class="s3">;</span>
+<span class="s0">// Importamos Paths y Path para navegar por las carpetas de Windows de forma segura.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">nio</span><span class="s3">.</span><span class="s1">file</span><span class="s3">.</span><span class="s1">Path</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">nio</span><span class="s3">.</span><span class="s1">file</span><span class="s3">.</span><span class="s1">Paths</span><span class="s3">;</span>
+<span class="s0">// Importamos la sesión para saber a quién cobrarle.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpSession</span><span class="s3">;</span>
+
+<span class="s0">// Inyectamos el anotador para encender el nodo de red.</span>
+<span class="s1">@RestController</span>
+<span class="s0">// Declaramos la clase que administra la distribución del conocimiento.</span>
+<span class="s2">public class </span><span class="s1">ControladorDescarga </span><span class="s3">{</span>
+
+    <span class="s0">// Escuchamos peticiones GET en la ruta específica de descarga.</span>
+    <span class="s1">@GetMapping</span><span class="s3">(</span><span class="s4">&quot;/descargar-apunte&quot;</span><span class="s3">)</span>
+    <span class="s0">// Declaramos el método utilizando el comodín &lt;?&gt; en la respuesta, ya que a veces devolveremos un archivo (Resource) y a veces un texto de error (String).</span>
+    <span class="s2">public </span><span class="s1">ResponseEntity</span><span class="s3">&lt;?&gt; </span><span class="s1">procesarDescarga</span><span class="s3">(</span><span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;archivoDestino&quot;</span><span class="s3">) </span><span class="s1">String nombreArchivo</span><span class="s3">, </span><span class="s1">HttpSession sesion</span><span class="s3">) {</span>
+
+        <span class="s0">// 1. VALIDACIÓN DE IDENTIDAD</span>
+        <span class="s0">// Preguntamos a la memoria RAM quién está intentando descargar.</span>
+        <span class="s1">String aliasUsuario </span><span class="s3">= (</span><span class="s1">String</span><span class="s3">) </span><span class="s1">sesion</span><span class="s3">.</span><span class="s1">getAttribute</span><span class="s3">(</span><span class="s4">&quot;usuarioLogueado&quot;</span><span class="s3">);</span>
+        <span class="s0">// Si es un fantasma o intruso, denegamos el acceso.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">aliasUsuario </span><span class="s3">== </span><span class="s2">null</span><span class="s3">) {</span>
+            <span class="s0">// Retornamos un estado HTTP 401 (No Autorizado) con un mensaje textual.</span>
+            <span class="s2">return </span><span class="s1">ResponseEntity</span><span class="s3">.</span><span class="s1">status</span><span class="s3">(</span><span class="s5">401</span><span class="s3">).</span><span class="s1">body</span><span class="s3">(</span><span class="s4">&quot;Error: Debes iniciar sesión para descargar.&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos el control de acceso.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// 2. VALIDACIÓN ECONÓMICA</span>
+        <span class="s0">// Traducimos el alias del usuario a su ID numérico interno en la base de datos.</span>
+        <span class="s2">int </span><span class="s1">idAutor </span><span class="s3">= </span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s1">aliasUsuario</span><span class="s3">);</span>
+        <span class="s0">// Consultamos la bóveda de SQLite para saber exactamente cuántos créditos tiene.</span>
+        <span class="s2">int </span><span class="s1">saldoActual </span><span class="s3">= </span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">consultarSaldo</span><span class="s3">(</span><span class="s1">idAutor</span><span class="s3">);</span>
+
+        <span class="s0">// Invocamos al MotorEconomia para que ejecute su regla de negocio matemática (¿Tiene al menos 5 créditos?).</span>
+        <span class="s2">if </span><span class="s3">(!</span><span class="s1">MotorEconomia</span><span class="s3">.</span><span class="s1">puedeDescargar</span><span class="s3">(</span><span class="s1">saldoActual</span><span class="s3">)) {</span>
+            <span class="s0">// Si la matemática falla, bloqueamos la transacción y avisamos de la pobreza virtual.</span>
+            <span class="s2">return </span><span class="s1">ResponseEntity</span><span class="s3">.</span><span class="s1">status</span><span class="s3">(</span><span class="s5">403</span><span class="s3">).</span><span class="s1">body</span><span class="s3">(</span><span class="s4">&quot;Error: Fondos insuficientes. Tienes &quot; </span><span class="s3">+ </span><span class="s1">saldoActual </span><span class="s3">+ </span><span class="s4">&quot; créditos y necesitas &quot; </span><span class="s3">+ </span><span class="s1">MotorEconomia</span><span class="s3">.</span><span class="s1">COSTO_DESCARGA </span><span class="s3">+ </span><span class="s4">&quot;.&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos la barrera de peaje económico.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// 3. EXTRACCIÓN Y ENTREGA FÍSICA</span>
+        <span class="s0">// Abrimos el bloque try-catch porque leer el disco duro es propenso a fallas (ej. archivo borrado accidentalmente).</span>
+        <span class="s2">try </span><span class="s3">{</span>
+            <span class="s0">// Construimos la ruta exacta hacia la bóveda donde se guardan los archivos físicos.</span>
+            <span class="s1">Path rutaArchivo </span><span class="s3">= </span><span class="s1">Paths</span><span class="s3">.</span><span class="s1">get</span><span class="s3">(</span><span class="s4">&quot;repositorio_nur/&quot; </span><span class="s3">+ </span><span class="s1">nombreArchivo</span><span class="s3">).</span><span class="s1">normalize</span><span class="s3">();</span>
+            <span class="s0">// Empaquetamos la ruta en un objeto Resource que Spring Boot puede enviar por internet.</span>
+            <span class="s1">Resource recurso </span><span class="s3">= </span><span class="s2">new </span><span class="s1">UrlResource</span><span class="s3">(</span><span class="s1">rutaArchivo</span><span class="s3">.</span><span class="s1">toUri</span><span class="s3">());</span>
+
+            <span class="s0">// Verificamos si el archivo realmente existe en tu computadora y si se puede leer.</span>
+            <span class="s2">if </span><span class="s3">(</span><span class="s1">recurso</span><span class="s3">.</span><span class="s1">exists</span><span class="s3">() &amp;&amp; </span><span class="s1">recurso</span><span class="s3">.</span><span class="s1">isReadable</span><span class="s3">()) {</span>
+
+                <span class="s0">// Antes de entregar el archivo, procesamos el cobro invocando al DAO.</span>
+                <span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">cobrarCreditos</span><span class="s3">(</span><span class="s1">idAutor</span><span class="s3">, </span><span class="s1">MotorEconomia</span><span class="s3">.</span><span class="s1">COSTO_DESCARGA</span><span class="s3">);</span>
+
+                <span class="s0">// Construimos la respuesta HTTP definitiva instruyendo al navegador web a lanzar la ventana de &quot;Guardar como...&quot;.</span>
+                <span class="s2">return </span><span class="s1">ResponseEntity</span><span class="s3">.</span><span class="s1">ok</span><span class="s3">()</span>
+                        <span class="s0">// Añadimos el encabezado 'Content-Disposition' forzando la descarga como adjunto (attachment).</span>
+                        <span class="s3">.</span><span class="s1">header</span><span class="s3">(</span><span class="s1">HttpHeaders</span><span class="s3">.</span><span class="s1">CONTENT_DISPOSITION</span><span class="s3">, </span><span class="s4">&quot;attachment; filename=</span><span class="s2">\&quot;</span><span class="s4">&quot; </span><span class="s3">+ </span><span class="s1">recurso</span><span class="s3">.</span><span class="s1">getFilename</span><span class="s3">() + </span><span class="s4">&quot;</span><span class="s2">\&quot;</span><span class="s4">&quot;</span><span class="s3">)</span>
+                        <span class="s0">// Definimos el tipo de contenido como un octeto binario universal.</span>
+                        <span class="s3">.</span><span class="s1">contentType</span><span class="s3">(</span><span class="s1">MediaType</span><span class="s3">.</span><span class="s1">APPLICATION_OCTET_STREAM</span><span class="s3">)</span>
+                        <span class="s0">// Inyectamos el archivo crudo en el cuerpo de la respuesta.</span>
+                        <span class="s3">.</span><span class="s1">body</span><span class="s3">(</span><span class="s1">recurso</span><span class="s3">);</span>
+
+                <span class="s0">// Si el archivo fue borrado de tu HP Celeron o está corrupto, abrimos la condición alterna.</span>
+            <span class="s3">} </span><span class="s2">else </span><span class="s3">{</span>
+                <span class="s0">// Informamos del error 404 de no existencia.</span>
+                <span class="s2">return </span><span class="s1">ResponseEntity</span><span class="s3">.</span><span class="s1">status</span><span class="s3">(</span><span class="s5">404</span><span class="s3">).</span><span class="s1">body</span><span class="s3">(</span><span class="s4">&quot;Error: El documento físico no existe en el servidor.&quot;</span><span class="s3">);</span>
+                <span class="s0">// Cerramos la validación de integridad del archivo.</span>
+            <span class="s3">}</span>
+
+            <span class="s0">// Capturamos cualquier desvío crítico de entrada/salida (I/O).</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">Exception e</span><span class="s3">) {</span>
+            <span class="s0">// Retornamos un error interno del servidor 500 para ocultar detalles sensibles de la excepción al usuario final.</span>
+            <span class="s2">return </span><span class="s1">ResponseEntity</span><span class="s3">.</span><span class="s1">status</span><span class="s3">(</span><span class="s5">500</span><span class="s3">).</span><span class="s1">body</span><span class="s3">(</span><span class="s4">&quot;Error interno del servidor al procesar la descarga.&quot;</span><span class="s3">);</span>
+            <span class="s0">// Cerramos el bloque de contingencia final.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Cerramos el método controlador de transacciones y entregas.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la arquitectura general de la clase.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

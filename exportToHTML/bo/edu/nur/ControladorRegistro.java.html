@@ -1,0 +1,103 @@
+<html>
+<head>
+<title>ControladorRegistro.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ControladorRegistro.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Mantenemos el paquete estructural del proyecto.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RestController</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">PostMapping</span><span class="s3">;</span>
+<span class="s2">import </span><span class="s1">org</span><span class="s3">.</span><span class="s1">springframework</span><span class="s3">.</span><span class="s1">web</span><span class="s3">.</span><span class="s1">bind</span><span class="s3">.</span><span class="s1">annotation</span><span class="s3">.</span><span class="s1">RequestParam</span><span class="s3">;</span>
+<span class="s0">// Importamos la herramienta nativa para manipular la respuesta del navegador.</span>
+<span class="s2">import </span><span class="s1">jakarta</span><span class="s3">.</span><span class="s1">servlet</span><span class="s3">.</span><span class="s1">http</span><span class="s3">.</span><span class="s1">HttpServletResponse</span><span class="s3">;</span>
+<span class="s0">// Importamos la excepción de entrada y salida requerida para redirecciones.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">io</span><span class="s3">.</span><span class="s1">IOException</span><span class="s3">;</span>
+
+<span class="s1">@RestController</span>
+<span class="s2">public class </span><span class="s1">ControladorRegistro </span><span class="s3">{</span>
+    <span class="s1">@PostMapping</span><span class="s3">(</span><span class="s4">&quot;/registrar-usuario&quot;</span><span class="s3">) </span><span class="s0">// Escuchamos el formulario de creación de cuentas de la tienda.</span>
+    <span class="s2">public void </span><span class="s1">procesarRegistro</span><span class="s3">(</span><span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;aliasUsuario&quot;</span><span class="s3">) </span><span class="s1">String alias</span><span class="s3">, </span><span class="s0">// Recibimos el alias único del estudiante.</span>
+                                 <span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;nombreCompleto&quot;</span><span class="s3">) </span><span class="s1">String nombre</span><span class="s3">, </span><span class="s0">// Recibimos el nombre real para el perfil.</span>
+                                 <span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;numeroCredencial&quot;</span><span class="s3">) </span><span class="s1">String credencial</span><span class="s3">, </span><span class="s0">// Recibimos la matrícula oficial de la NUR.</span>
+                                 <span class="s1">@RequestParam</span><span class="s3">(</span><span class="s4">&quot;claveUsuario&quot;</span><span class="s3">) </span><span class="s1">String clave</span><span class="s3">, </span><span class="s0">// Recibimos la contraseña en texto plano del formulario.</span>
+                                 <span class="s1">HttpServletResponse respuesta</span><span class="s3">) </span><span class="s2">throws </span><span class="s1">IOException </span><span class="s3">{ </span><span class="s0">// Inyectamos la respuesta para controlar la navegación HTTP.</span>
+
+        <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">setContentType</span><span class="s3">(</span><span class="s4">&quot;text/html;charset=UTF-8&quot;</span><span class="s3">); </span><span class="s0">// Forzamos el formato HTML con soporte para tildes en la respuesta.</span>
+
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s1">alias</span><span class="s3">) != -</span><span class="s5">1</span><span class="s3">) { </span><span class="s0">// Consultamos en SQLite si el alias ya existe para evitar duplicación.</span>
+            <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">getWriter</span><span class="s3">().</span><span class="s1">write</span><span class="s3">(</span><span class="s4">&quot;&lt;h2&gt;Error&lt;/h2&gt;&lt;p&gt;El nombre de usuario ya existe.&lt;/p&gt;&quot;</span><span class="s3">); </span><span class="s0">// Notificamos el conflicto de identidad.</span>
+            <span class="s2">return</span><span class="s3">; </span><span class="s0">// Abortamos la ejecución del método inmediatamente.</span>
+        <span class="s3">} </span><span class="s0">// Cerramos la verificación de duplicados.</span>
+
+        <span class="s0">// CRIPTOGRAFÍA: Generamos el hash inmutable aplicando un salt aleatorio con jBCrypt.</span>
+        <span class="s1">String claveHasheada </span><span class="s3">= </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">hashpw</span><span class="s3">(</span><span class="s1">clave</span><span class="s3">, </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">gensalt</span><span class="s3">()); </span><span class="s0">// Transformamos el texto plano en 60 caracteres seguros.</span>
+
+        <span class="s0">// Instanciamos el modelo Usuario pasando la contraseña encriptada en lugar de la cruda.</span>
+        <span class="s1">Usuario nuevoEstudiante </span><span class="s3">= </span><span class="s2">new </span><span class="s1">Usuario</span><span class="s3">(</span><span class="s1">alias</span><span class="s3">, </span><span class="s1">nombre</span><span class="s3">, </span><span class="s1">credencial</span><span class="s3">, </span><span class="s1">claveHasheada</span><span class="s3">); </span><span class="s0">// El objeto en RAM queda protegido.</span>
+
+        <span class="s0">// Paso 3: PERSISTENCIA EN DISCO DURO</span>
+        <span class="s2">boolean </span><span class="s1">exito </span><span class="s3">= </span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">registrarUsuario</span><span class="s3">(</span><span class="s1">nuevoEstudiante</span><span class="s3">); </span><span class="s0">// Guardamos la fila en SQLite.</span>
+
+        <span class="s0">// Paso 4: INYECCIÓN ECONÓMICA Y REDIRECCIÓN</span>
+        <span class="s0">// Evaluamos si el paso previo (insertar al usuario en SQLite) fue exitoso.</span>
+        <span class="s2">if </span><span class="s3">(</span><span class="s1">exito</span><span class="s3">) {</span>
+
+            <span class="s0">// Disparamos la primera sonda para confirmar que entramos al bloque económico.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;TELEMETRÍA REGISTRO -&gt; Usuario guardado en SQLite. Buscando ID asignado...&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// Invocamos al DAO para que nos devuelva el ID numérico que SQLite acaba de generar.</span>
+            <span class="s2">int </span><span class="s1">idNuevoUsuario </span><span class="s3">= </span><span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s1">alias</span><span class="s3">);</span>
+
+            <span class="s0">// Disparamos la segunda sonda para ver si el ID es válido o si el DAO nos devolvió un -1 (error).</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;TELEMETRÍA REGISTRO -&gt; ID recuperado: &quot; </span><span class="s3">+ </span><span class="s1">idNuevoUsuario</span><span class="s3">);</span>
+
+            <span class="s0">// Validamos que el ID exista físicamente antes de intentar regalarle dinero.</span>
+            <span class="s2">if </span><span class="s3">(</span><span class="s1">idNuevoUsuario </span><span class="s3">!= -</span><span class="s5">1</span><span class="s3">) {</span>
+
+                <span class="s0">// Anunciamos la transacción antes de ejecutarla.</span>
+                <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;TELEMETRÍA REGISTRO -&gt; Inyectando &quot; </span><span class="s3">+ </span><span class="s1">MotorEconomia</span><span class="s3">.</span><span class="s1">BONO_BIENVENIDA </span><span class="s3">+ </span><span class="s4">&quot; créditos...&quot;</span><span class="s3">);</span>
+
+                <span class="s0">// Ejecutamos la orden al DAO de inyectar los fondos.</span>
+                <span class="s1">UsuarioDAO</span><span class="s3">.</span><span class="s1">sumarCreditos</span><span class="s3">(</span><span class="s1">idNuevoUsuario</span><span class="s3">, </span><span class="s1">MotorEconomia</span><span class="s3">.</span><span class="s1">BONO_BIENVENIDA</span><span class="s3">);</span>
+
+                <span class="s0">// Abrimos la contingencia en caso de que el ID no se encuentre.</span>
+            <span class="s3">} </span><span class="s2">else </span><span class="s3">{</span>
+
+                <span class="s0">// Imprimimos un error crítico: el usuario se guardó, pero no podemos encontrarlo para pagarle.</span>
+                <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;ERROR REGISTRO -&gt; No se pudo encontrar el ID del usuario recién creado.&quot;</span><span class="s3">);</span>
+
+                <span class="s0">// Cerramos la validación económica.</span>
+            <span class="s3">}</span>
+
+            <span class="s0">// Forzamos al navegador web a redirigirse instantáneamente a la pantalla principal de Login.</span>
+            <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">sendRedirect</span><span class="s3">(</span><span class="s4">&quot;/&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// Abrimos la ruta de error si la base de datos colapsó desde el primer intento de registro.</span>
+        <span class="s3">} </span><span class="s2">else </span><span class="s3">{</span>
+
+            <span class="s0">// Escribimos un HTML crudo en la pantalla del usuario indicando un fallo interno.</span>
+            <span class="s1">respuesta</span><span class="s3">.</span><span class="s1">getWriter</span><span class="s3">().</span><span class="s1">write</span><span class="s3">(</span><span class="s4">&quot;&lt;h2&gt;Fallo del Servidor&lt;/h2&gt;&lt;p&gt;No se pudo crear la cuenta.&lt;/p&gt;&quot;</span><span class="s3">);</span>
+
+            <span class="s0">// Cerramos la validación principal de éxito.</span>
+        <span class="s3">}</span>
+
+        <span class="s0">// Cerramos el método. // Cerramos la bifurcación de la persistencia.</span>
+    <span class="s3">} </span><span class="s0">// Cerramos el método procesarRegistro.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

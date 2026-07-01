@@ -1,0 +1,205 @@
+<html>
+<head>
+<title>UsuarioDAO.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #7a7e85;}
+.s1 { color: #bcbec4;}
+.s2 { color: #cf8e6d;}
+.s3 { color: #bcbec4;}
+.s4 { color: #6aab73;}
+.s5 { color: #2aacb8;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+UsuarioDAO.java</font>
+</center></td></tr></table>
+<pre><span class="s0">// Declaramos el paquete para que Spring Boot lo encuentre sin problemas.</span>
+<span class="s2">package </span><span class="s1">bo</span><span class="s3">.</span><span class="s1">edu</span><span class="s3">.</span><span class="s1">nur</span><span class="s3">;</span>
+
+<span class="s0">// Importamos la conexión nativa a la base de datos.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">Connection</span><span class="s3">;</span>
+<span class="s0">// Importamos la clase para enviar consultas seguras.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">PreparedStatement</span><span class="s3">;</span>
+<span class="s0">// Importamos ResultSet para poder leer las respuestas del SELECT.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">ResultSet</span><span class="s3">;</span>
+<span class="s0">// Importamos la clase para manejar errores físicos del archivo.</span>
+<span class="s2">import </span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">SQLException</span><span class="s3">;</span>
+
+<span class="s0">// Declaramos la clase que administra la tabla Usuario en SQLite.</span>
+<span class="s2">public class </span><span class="s1">UsuarioDAO </span><span class="s3">{</span>
+
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 1: Para guardar un usuario nuevo (El que ya teníamos)</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static boolean </span><span class="s1">registrarUsuario</span><span class="s3">(</span><span class="s1">Usuario nuevoUsuario</span><span class="s3">) {</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;INSERT INTO Usuario (nombre_usuario, nombre_completo, numero_credencial, contrasena, creditos_virtuales, racha_diaria, fecha_ultimo_acceso) VALUES (?, ?, ?, ?, ?, ?, ?)&quot;</span><span class="s3">;</span>
+
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerNombreUsuario</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">2</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerNombreCompleto</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">3</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerNumeroCredencial</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">4</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerContrasena</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">5</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerCreditos</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">6</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerRachaDiaria</span><span class="s3">());</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">7</span><span class="s3">, </span><span class="s1">nuevoUsuario</span><span class="s3">.</span><span class="s1">obtenerFechaUltimoAccesoComoTexto</span><span class="s3">());</span>
+
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeUpdate</span><span class="s3">();</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Estudiante insertado exitosamente en la base de datos.&quot;</span><span class="s3">);</span>
+            <span class="s2">return true</span><span class="s3">;</span>
+
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error crítico al registrar: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+            <span class="s2">return false</span><span class="s3">;</span>
+        <span class="s3">}</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 2: Para validar el inicio de sesión (El que te faltaba)</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static boolean </span><span class="s1">validarCredenciales</span><span class="s3">(</span><span class="s1">String alias</span><span class="s3">, </span><span class="s1">String claveCruda</span><span class="s3">) { </span><span class="s0">// Recibimos las credenciales de entrada desde la pantalla web.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;SELECT contrasena FROM Usuario WHERE nombre_usuario = ?&quot;</span><span class="s3">; </span><span class="s0">// Preparamos la consulta orientada exclusivamente a la columna de seguridad.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">(); </span><span class="s0">// Abrimos el túnel de comunicación con la base de datos SQLite.</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) { </span><span class="s0">// Preparamos la estructura de la sentencia para mitigar inyecciones SQL.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">alias</span><span class="s3">); </span><span class="s0">// Vinculamos el alias recibido al primer comodín de la consulta de lectura.</span>
+            <span class="s2">try </span><span class="s3">(</span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">ResultSet resultados </span><span class="s3">= </span><span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeQuery</span><span class="s3">()) { </span><span class="s0">// Ejecutamos la lectura en el disco duro y abrimos el cursor de datos.</span>
+                <span class="s2">if </span><span class="s3">(</span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">next</span><span class="s3">()) { </span><span class="s0">// Evaluamos si el cursor encontró una fila que coincida con el nombre de usuario.</span>
+                    <span class="s1">String hashGuardado </span><span class="s3">= </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getString</span><span class="s3">(</span><span class="s4">&quot;contrasena&quot;</span><span class="s3">); </span><span class="s0">// Extraemos la cadena de 60 caracteres criptográficos de la columna.</span>
+                    <span class="s0">// COMPROBACIÓN: jBCrypt decodifica el salt y compara matemáticamente ambos valores en milisegundos.</span>
+                    <span class="s2">return </span><span class="s1">org</span><span class="s3">.</span><span class="s1">mindrot</span><span class="s3">.</span><span class="s1">jbcrypt</span><span class="s3">.</span><span class="s1">BCrypt</span><span class="s3">.</span><span class="s1">checkpw</span><span class="s3">(</span><span class="s1">claveCruda</span><span class="s3">, </span><span class="s1">hashGuardado</span><span class="s3">); </span><span class="s0">// Retorna verdadero si coinciden, falso de lo contrario.</span>
+                <span class="s3">} </span><span class="s0">// Cerramos el bloque condicional del registro encontrado.</span>
+            <span class="s3">} </span><span class="s0">// Cerramos automáticamente el ResultSet para liberar memoria RAM.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) { </span><span class="s0">// Capturamos cualquier colapso o excepción de conectividad con SQLite.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error crítico en la validación criptográfica: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">()); </span><span class="s0">// Registramos la falla detallada en la consola de IntelliJ.</span>
+        <span class="s3">} </span><span class="s0">// Cerramos el bloque de contingencia de errores.</span>
+        <span class="s2">return false</span><span class="s3">; </span><span class="s0">// Retornamos falso por defecto si las contraseñas no coinciden o si el proceso falló.</span>
+    <span class="s3">} </span><span class="s0">// Cerramos el método de validación de credenciales.</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 3: Extraer el ID numérico a partir del nombre de usuario.</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static int </span><span class="s1">obtenerIdPorAlias</span><span class="s3">(</span><span class="s1">String alias</span><span class="s3">) {</span>
+        <span class="s0">// Redactamos la consulta SQL para traer exclusivamente la columna id_usuario.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;SELECT id_usuario FROM Usuario WHERE nombre_usuario = ?&quot;</span><span class="s3">;</span>
+        <span class="s0">// Abrimos la conexión física con la base de datos de manera segura.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+            <span class="s0">// Reemplazamos el comodín con el alias extraído de la sesión web.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setString</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">alias</span><span class="s3">);</span>
+            <span class="s0">// Ejecutamos la lectura y guardamos el resultado en la memoria virtual (ResultSet).</span>
+            <span class="s2">try </span><span class="s3">(</span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">ResultSet resultados </span><span class="s3">= </span><span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeQuery</span><span class="s3">()) {</span>
+                <span class="s0">// Si encontramos una coincidencia, extraemos y retornamos el número entero.</span>
+                <span class="s2">if </span><span class="s3">(</span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">next</span><span class="s3">()) {</span>
+                    <span class="s0">// Retornamos el valor numérico exacto de la llave primaria.</span>
+                    <span class="s2">return </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getInt</span><span class="s3">(</span><span class="s4">&quot;id_usuario&quot;</span><span class="s3">);</span>
+                    <span class="s0">// Cerramos el bloque condicional.</span>
+                <span class="s3">}</span>
+                <span class="s0">// Cerramos el bloque del ResultSet.</span>
+            <span class="s3">}</span>
+            <span class="s0">// Capturamos cualquier falla en la lectura del archivo SQLite.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+            <span class="s0">// Imprimimos el error crítico para el desarrollador.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error al buscar ID: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+            <span class="s0">// Cerramos el bloque de excepciones.</span>
+        <span class="s3">}</span>
+        <span class="s0">// Retornamos -1 como señal de error si el usuario no existe en la base de datos.</span>
+        <span class="s2">return </span><span class="s3">-</span><span class="s5">1</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el método de extracción de ID.</span>
+    <span class="s3">}</span>
+
+
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 4: Inyectar créditos virtuales como recompensa.</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static void </span><span class="s1">sumarCreditos</span><span class="s3">(</span><span class="s2">int </span><span class="s1">idUsuario</span><span class="s3">, </span><span class="s2">int </span><span class="s1">cantidad</span><span class="s3">) {</span>
+        <span class="s0">// Redactamos una consulta de actualización (UPDATE) matemática para sumar el valor directamente en el motor de la base de datos.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;UPDATE Usuario SET creditos_virtuales = creditos_virtuales + ? WHERE id_usuario = ?&quot;</span><span class="s3">;</span>
+        <span class="s0">// Abrimos el túnel de comunicación y preparamos la sentencia.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+            <span class="s0">// Inyectamos la cantidad de créditos a sumar (ej. 10).</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">cantidad</span><span class="s3">);</span>
+            <span class="s0">// Inyectamos el identificador del estudiante que recibirá el premio.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">2</span><span class="s3">, </span><span class="s1">idUsuario</span><span class="s3">);</span>
+            <span class="s0">// Ejecutamos la orden de escritura y actualización en el disco duro.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeUpdate</span><span class="s3">();</span>
+            <span class="s0">// Capturamos cualquier colapso de escritura.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+            <span class="s0">// Registramos la falla si la transacción económica fracasa.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error al sumar créditos: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+            <span class="s0">// Cerramos el manejador de errores.</span>
+        <span class="s3">}</span>
+        <span class="s0">// Cerramos el método de recompensa económica.</span>
+    <span class="s3">}</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 5: Consultar la billetera virtual del estudiante.</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static int </span><span class="s1">consultarSaldo</span><span class="s3">(</span><span class="s2">int </span><span class="s1">idUsuario</span><span class="s3">) {</span>
+        <span class="s0">// Declaramos la consulta de lectura dirigida específicamente a la columna de los créditos.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;SELECT creditos_virtuales FROM Usuario WHERE id_usuario = ?&quot;</span><span class="s3">;</span>
+
+        <span class="s0">// Abrimos el túnel de conexión seguro hacia el archivo de SQLite.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+
+            <span class="s0">// Inyectamos el ID numérico del estudiante en el comodín de la consulta.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">idUsuario</span><span class="s3">);</span>
+
+            <span class="s0">// Ejecutamos la lectura y almacenamos la fila resultante en la memoria RAM.</span>
+            <span class="s2">try </span><span class="s3">(</span><span class="s1">java</span><span class="s3">.</span><span class="s1">sql</span><span class="s3">.</span><span class="s1">ResultSet resultados </span><span class="s3">= </span><span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeQuery</span><span class="s3">()) {</span>
+                <span class="s0">// Evaluamos si el cursor encontró al estudiante en la base de datos.</span>
+                <span class="s2">if </span><span class="s3">(</span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">next</span><span class="s3">()) {</span>
+                    <span class="s0">// Extraemos y retornamos el valor matemático exacto de sus créditos actuales.</span>
+                    <span class="s2">return </span><span class="s1">resultados</span><span class="s3">.</span><span class="s1">getInt</span><span class="s3">(</span><span class="s4">&quot;creditos_virtuales&quot;</span><span class="s3">);</span>
+                    <span class="s0">// Cerramos el condicional de existencia.</span>
+                <span class="s3">}</span>
+                <span class="s0">// Cerramos el lector de resultados para no dejar fugas de memoria.</span>
+            <span class="s3">}</span>
+
+            <span class="s0">// Capturamos cualquier colisión o error de lectura en el disco.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+            <span class="s0">// Imprimimos el rastro de la falla en la consola para depuración.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error al consultar saldo: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+            <span class="s0">// Cerramos el bloque de protección contra errores.</span>
+        <span class="s3">}</span>
+        <span class="s0">// Retornamos 0 por seguridad si ocurre un error catastrófico; ante la duda, nadie tiene saldo infinito.</span>
+        <span class="s2">return </span><span class="s5">0</span><span class="s3">;</span>
+        <span class="s0">// Cerramos el método de consulta económica.</span>
+    <span class="s3">}</span>
+
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s0">// MÉTODO 6: Cobrar por la descarga de un apunte.</span>
+    <span class="s0">// -------------------------------------------------------------------------</span>
+    <span class="s2">public static void </span><span class="s1">cobrarCreditos</span><span class="s3">(</span><span class="s2">int </span><span class="s1">idUsuario</span><span class="s3">, </span><span class="s2">int </span><span class="s1">cantidadACobrar</span><span class="s3">) {</span>
+        <span class="s0">// Redactamos la consulta de actualización restando matemáticamente la cantidad del saldo actual.</span>
+        <span class="s1">String sql </span><span class="s3">= </span><span class="s4">&quot;UPDATE Usuario SET creditos_virtuales = creditos_virtuales - ? WHERE id_usuario = ?&quot;</span><span class="s3">;</span>
+
+        <span class="s0">// Iniciamos la conexión transaccional con la base de datos.</span>
+        <span class="s2">try </span><span class="s3">(</span><span class="s1">Connection conexion </span><span class="s3">= </span><span class="s1">ConexionDB</span><span class="s3">.</span><span class="s1">conectar</span><span class="s3">();</span>
+             <span class="s1">PreparedStatement declaracion </span><span class="s3">= </span><span class="s1">conexion</span><span class="s3">.</span><span class="s1">prepareStatement</span><span class="s3">(</span><span class="s1">sql</span><span class="s3">)) {</span>
+
+            <span class="s0">// Inyectamos el costo de la descarga (que vendrá del MotorEconomia) en el primer comodín.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">1</span><span class="s3">, </span><span class="s1">cantidadACobrar</span><span class="s3">);</span>
+            <span class="s0">// Inyectamos el ID del estudiante al que se le aplicará el cobro.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">setInt</span><span class="s3">(</span><span class="s5">2</span><span class="s3">, </span><span class="s1">idUsuario</span><span class="s3">);</span>
+
+            <span class="s0">// Ejecutamos la orden de escritura y modificación irreversible en el disco duro.</span>
+            <span class="s1">declaracion</span><span class="s3">.</span><span class="s1">executeUpdate</span><span class="s3">();</span>
+
+            <span class="s0">// Atrapamos las excepciones originadas por bloqueos en el archivo .db.</span>
+        <span class="s3">} </span><span class="s2">catch </span><span class="s3">(</span><span class="s1">SQLException e</span><span class="s3">) {</span>
+            <span class="s0">// Anotamos en la consola el fallo del cobro.</span>
+            <span class="s1">System</span><span class="s3">.</span><span class="s1">out</span><span class="s3">.</span><span class="s1">println</span><span class="s3">(</span><span class="s4">&quot;Error crítico al cobrar créditos: &quot; </span><span class="s3">+ </span><span class="s1">e</span><span class="s3">.</span><span class="s1">getMessage</span><span class="s3">());</span>
+            <span class="s0">// Cerramos el bloque de gestión de excepciones.</span>
+        <span class="s3">}</span>
+        <span class="s0">// Cerramos el método de cobro virtual.</span>
+    <span class="s3">}</span>
+
+<span class="s0">// Cerramos la clase UsuarioDAO.</span>
+<span class="s3">}</span></pre>
+</body>
+</html>

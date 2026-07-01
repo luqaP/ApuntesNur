@@ -1,0 +1,65 @@
+<html>
+<head>
+<title>ConexionDB.java</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #cf8e6d;}
+.s1 { color: #bcbec4;}
+.s2 { color: #bcbec4;}
+.s3 { color: #7a7e85;}
+.s4 { color: #6aab73;}
+</style>
+</head>
+<body bgcolor="#1e1f22">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+ConexionDB.java</font>
+</center></td></tr></table>
+<pre><span class="s0">package </span><span class="s1">bo</span><span class="s2">.</span><span class="s1">edu</span><span class="s2">.</span><span class="s1">nur</span><span class="s2">;</span><span class="s3">// Importamos la clase Connection del paquete java.sql para mantener activa la sesión con la base de datos.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">Connection</span><span class="s2">;</span>
+<span class="s3">// Importamos la clase DriverManager del paquete java.sql para localizar y cargar el controlador específico.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">DriverManager</span><span class="s2">;</span>
+<span class="s3">// Importamos la clase SQLException del paquete java.sql para capturar errores de ejecución en el motor relacional.</span>
+<span class="s0">import </span><span class="s1">java</span><span class="s2">.</span><span class="s1">sql</span><span class="s2">.</span><span class="s1">SQLException</span><span class="s2">;</span>
+
+<span class="s3">// Declaramos la clase pública bo.edu.nur.ConexionDB que funcionará como el puente único entre tu código Java y el archivo de SQLite.</span>
+<span class="s0">public class </span><span class="s1">ConexionDB </span><span class="s2">{</span>
+
+    <span class="s3">// Declaramos un método público y estático que retorna un objeto Connection para ser invocado globalmente en la plataforma.</span>
+    <span class="s0">public static </span><span class="s1">Connection conectar</span><span class="s2">() {</span>
+        <span class="s3">// Declaramos la variable de conexión y la inicializamos en null para manejar un estado por defecto si ocurre un fallo.</span>
+        <span class="s1">Connection conexion </span><span class="s2">= </span><span class="s0">null</span><span class="s2">;</span>
+
+        <span class="s3">// Abrimos un bloque try para intentar ejecutar el código de carga del driver y la comunicación física.</span>
+        <span class="s0">try </span><span class="s2">{</span>
+            <span class="s3">// Obligamos a la Máquina Virtual de Java a buscar y cargar en memoria la clase exacta del driver de SQLite.</span>
+            <span class="s3">// Si el archivo .jar no está correctamente vinculado en IntelliJ, esta línea lanzará un error ClassNotFoundException.</span>
+            <span class="s1">Class</span><span class="s2">.</span><span class="s1">forName</span><span class="s2">(</span><span class="s4">&quot;org.sqlite.JDBC&quot;</span><span class="s2">);</span>
+
+            <span class="s3">// Definimos la ruta de conexión (URL) utilizando el protocolo JDBC específico para leer o generar tu archivo local.</span>
+            <span class="s1">String url </span><span class="s2">= </span><span class="s4">&quot;jdbc:sqlite:apuntes_nur.db&quot;</span><span class="s2">;</span>
+
+            <span class="s3">// Invocamos el método getConnection del DriverManager para establecer el enlace físico utilizando la URL.</span>
+            <span class="s1">conexion </span><span class="s2">= </span><span class="s1">DriverManager</span><span class="s2">.</span><span class="s1">getConnection</span><span class="s2">(</span><span class="s1">url</span><span class="s2">);</span>
+
+            <span class="s3">// Imprimimos un mensaje en la consola de tu IDE para confirmar visualmente que el enlace fue un éxito rotundo.</span>
+            <span class="s1">System</span><span class="s2">.</span><span class="s1">out</span><span class="s2">.</span><span class="s1">println</span><span class="s2">(</span><span class="s4">&quot;Conexión a SQLite establecida con éxito.&quot;</span><span class="s2">);</span>
+
+            <span class="s3">// Abrimos un bloque catch múltiple para capturar tanto si falta el archivo .jar como si falla la estructura del archivo.</span>
+        <span class="s2">} </span><span class="s0">catch </span><span class="s2">(</span><span class="s1">ClassNotFoundException </span><span class="s2">| </span><span class="s1">SQLException e</span><span class="s2">) {</span>
+            <span class="s3">// Imprimimos un mensaje de error crítico y concatenamos el mensaje exacto que devuelve el sistema operativo.</span>
+            <span class="s3">// La instrucción e.getMessage() imprimirá la pista absoluta de por qué la base de datos te está rechazando.</span>
+            <span class="s1">System</span><span class="s2">.</span><span class="s1">out</span><span class="s2">.</span><span class="s1">println</span><span class="s2">(</span><span class="s4">&quot;Error crítico al conectar con la base de datos: &quot; </span><span class="s2">+ </span><span class="s1">e</span><span class="s2">.</span><span class="s1">getMessage</span><span class="s2">());</span>
+            <span class="s3">// Cerramos la estructura de control estricta de manejo de excepciones.</span>
+        <span class="s2">}</span>
+
+        <span class="s3">// Retornamos el objeto conexion (ya sea válido con la sesión activa, o null si el proceso falló y fue capturado por el catch).</span>
+        <span class="s0">return </span><span class="s1">conexion</span><span class="s2">;</span>
+        <span class="s3">// Cerramos el bloque de ejecución correspondiente al método estático conectar().</span>
+    <span class="s2">}</span>
+
+<span class="s3">// Cerramos el bloque general correspondiente a la declaración estructural de la clase bo.edu.nur.ConexionDB.</span>
+<span class="s2">}</span></pre>
+</body>
+</html>
