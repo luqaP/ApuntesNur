@@ -1,0 +1,2335 @@
+
+=========================================================================
+CONTEO DE CLASE: Apunte.java
+=========================================================================
+// Declaramos el paquete estructural que contiene las entidades de la base de datos.
+package bo.edu.nur;
+
+// Declaramos la clase pública que actúa como el molde para los documentos del sistema.
+public class Apunte {
+
+    // Identificador único y llave primaria del apunte en SQLite.
+    private int idApunte;
+    // Cadena de texto que almacena el nombre comercial del documento.
+    private String titulo;
+    // Rama académica a la que pertenece (Ej: Programacion, Algebra).
+    private String categoria;
+    // Llave foránea numérica que enlaza con la tabla Usuario.
+    private int idAutor;
+    // Ruta encriptada y absoluta hacia el binario en el disco duro.
+    private String rutaArchivoFisico;
+    // NUEVO: Atributo transitorio para almacenar en RAM el nombre del autor extraído vía SQL.
+    private String aliasAutor;
+
+    // Constructor maestro para cuando extraemos un apunte completo desde SQLite (con ID y Alias).
+    public Apunte(int idApunte, String titulo, String categoria, int idAutor, String rutaArchivoFisico, String aliasAutor) {
+        // Asignamos el ID primario.
+        this.idApunte = idApunte;
+        // Asignamos el título.
+        this.titulo = titulo;
+        // Asignamos la taxonomía académica.
+        this.categoria = categoria;
+        // Asignamos el ID numérico del creador.
+        this.idAutor = idAutor;
+        // Asignamos la ruta de descarga.
+        this.rutaArchivoFisico = rutaArchivoFisico;
+        // Asignamos el nombre de usuario textual.
+        this.aliasAutor = aliasAutor;
+        // Cerramos el constructor de extracción.
+    }
+
+    // Constructor transaccional para cuando el estudiante recién sube el apunte (aún no tiene ID de BD).
+    public Apunte(String titulo, String categoria, int idAutor, String rutaArchivoFisico) {
+        // Asignamos un 0 temporal mientras SQLite le asigna un número real.
+        this.idApunte = 0;
+        // Asignamos el título digitado en el formulario.
+        this.titulo = titulo;
+        // Asignamos la materia seleccionada.
+        this.categoria = categoria;
+        // Asignamos el ID numérico extraído de la sesión.
+        this.idAutor = idAutor;
+        // Asignamos la ruta física recién generada con el UUID.
+        this.rutaArchivoFisico = rutaArchivoFisico;
+        // Inicializamos el alias como desconocido hasta que se haga una consulta relacional.
+        this.aliasAutor = "Desconocido";
+        // Cerramos el constructor de inserción.
+    }
+
+    // Método de acceso para extraer el ID primario.
+    public int getIdApunte() {
+        // Devolvemos el valor numérico.
+        return idApunte;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar el ID primario.
+    public void setIdApunte(int idApunte) {
+        // Sobrescribimos el valor de la memoria.
+        this.idApunte = idApunte;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer el título.
+    public String getTitulo() {
+        // Devolvemos el texto.
+        return titulo;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar el título.
+    public void setTitulo(String titulo) {
+        // Sobrescribimos el título.
+        this.titulo = titulo;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer la materia.
+    public String getCategoria() {
+        // Devolvemos la rama académica.
+        return categoria;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar la materia.
+    public void setCategoria(String categoria) {
+        // Sobrescribimos la categoría.
+        this.categoria = categoria;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer la llave foránea del autor.
+    public int getIdAutor() {
+        // Devolvemos el ID relacional.
+        return idAutor;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar la llave foránea.
+    public void setIdAutor(int idAutor) {
+        // Sobrescribimos el enlace relacional.
+        this.idAutor = idAutor;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer la ubicación física del archivo.
+    public String getRutaArchivoFisico() {
+        // Devolvemos la ruta local.
+        return rutaArchivoFisico;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar la ruta física.
+    public void setRutaArchivoFisico(String rutaArchivoFisico) {
+        // Sobrescribimos la ruta.
+        this.rutaArchivoFisico = rutaArchivoFisico;
+        // Cerramos el setter.
+    }
+
+    // Método de acceso para extraer el nombre en texto del autor (usado por Thymeleaf).
+    public String getAliasAutor() {
+        // Devolvemos el alias.
+        return aliasAutor;
+        // Cerramos el getter.
+    }
+
+    // Método de acceso para inyectar el alias desde una consulta SQL con JOIN.
+    public void setAliasAutor(String aliasAutor) {
+        // Sobrescribimos el texto del autor.
+        this.aliasAutor = aliasAutor;
+        // Cerramos el setter.
+    }
+// Cerramos la clase modelo.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ApunteDAO.java
+=========================================================================
+// Declaramos el paquete estructural para la capa de acceso a datos.
+package bo.edu.nur;
+
+// Importamos la interfaz Connection para manejar el tubo hacia SQLite.
+import java.sql.Connection;
+// Importamos PreparedStatement para blindar el código contra inyecciones SQL.
+import java.sql.PreparedStatement;
+// Importamos ResultSet para navegar por la tabla virtual que devuelve la base de datos.
+import java.sql.ResultSet;
+// Importamos SQLException para manejar colapsos del motor relacional.
+import java.sql.SQLException;
+// Importamos List y ArrayList para empaquetar las filas en colecciones de Java.
+import java.util.ArrayList;
+import java.util.List;
+
+// Declaramos el Data Access Object encargado de la tabla Apunte.
+public class ApunteDAO {
+
+    // Método maestro para insertar un nuevo registro en el disco duro.
+    public static boolean registrarApunte(Apunte apunte) {
+        // Redactamos la orden SQL de inserción con parámetros ciegos (?).
+        String sql = "INSERT INTO Apunte (titulo, categoria_materia, id_autor, ruta_archivo_fisico) VALUES (?, ?, ?, ?)";
+
+        // Iniciamos el bloque blindado que cerrará la conexión automáticamente al terminar.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia en el motor de base de datos.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el título extraído de la RAM al primer parámetro SQL.
+            declaracion.setString(1, apunte.getTitulo());
+            // Inyectamos la taxonomía al segundo parámetro.
+            declaracion.setString(2, apunte.getCategoria());
+            // Inyectamos la llave foránea al tercer parámetro.
+            declaracion.setInt(3, apunte.getIdAutor());
+            // Inyectamos la ruta del binario al cuarto parámetro.
+            declaracion.setString(4, apunte.getRutaArchivoFisico());
+
+            // Ejecutamos la orden de escritura y verificamos si se afectó al menos una fila.
+            return declaracion.executeUpdate() > 0;
+
+            // Atrapamos cualquier error físico del disco o de bloqueo de la base de datos.
+        } catch (SQLException e) {
+            // Imprimimos la traza del error en la terminal de diagnóstico.
+            System.out.println("ERROR DAO -> Fallo al insertar el apunte: " + e.getMessage());
+            // Devolvemos falso para notificar el fallo a la capa de servicio.
+            return false;
+            // Cerramos la captura de contingencia.
+        }
+        // Cerramos el método de escritura.
+    }
+
+    // ========================================================================================
+    // MÉTODO 2: EXTRAER EL CATÁLOGO COMPLETO MEDIANTE ÁLGEBRA RELACIONAL (CORREGIDO)
+    // ========================================================================================
+
+    // Método estático maestro para extraer la biblioteca global inyectando el alias de los creadores.
+    public static List<Apunte> obtenerTodosLosApuntes() {
+        // Reservamos espacio en la memoria RAM para la colección dinámica de objetos.
+        List<Apunte> lista = new ArrayList<>();
+
+        // REDACCIÓN CRÍTICA (BUG FIX):
+        // Realizamos un INNER JOIN entre Apunte (a) y Usuario (u).
+        // Extraemos todas las columnas de Apunte (a.*) y ÚNICAMENTE la columna 'nombre_usuario' de Usuario.
+        // Anteriormente pedíamos 'u.alias', lo cual provocaba un colapso físico por inexistencia.
+        String sql = "SELECT a.*, u.nombre_usuario FROM Apunte a INNER JOIN Usuario u ON a.id_autor = u.id_usuario";
+
+        // Abrimos el conducto temporal hacia el archivo físico .db.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la consulta masiva.
+             PreparedStatement declaracion = conexion.prepareStatement(sql);
+             // Ejecutamos la lectura y volcamos el disco duro en el cursor de memoria.
+             ResultSet resultados = declaracion.executeQuery()) {
+
+            // Iteramos fila por fila mientras el cursor detecte registros.
+            while (resultados.next()) {
+                // Mapeamos la llave primaria del documento.
+                int id = resultados.getInt("id_apunte");
+                // Mapeamos el título comercial del documento.
+                String titulo = resultados.getString("titulo");
+                // Mapeamos la taxonomía académica.
+                String categoria = resultados.getString("categoria_materia");
+                // Mapeamos el ID foráneo del autor.
+                int idAutor = resultados.getInt("id_autor");
+                // Mapeamos la ruta física, purgando el nombre del directorio para facilitar el trabajo a Thymeleaf.
+                String ruta = resultados.getString("ruta_archivo_fisico").replace("repositorio_nur/", "");
+
+                // EXTRACCIÓN JOIN CORREGIDA: Rescatamos el nombre de usuario desde la columna física real 'nombre_usuario'.
+                String aliasRecuperado = resultados.getString("nombre_usuario");
+
+                // Instanciamos el objeto con el constructor ORM actualizado de 6 parámetros.
+                Apunte apunte = new Apunte(id, titulo, categoria, idAutor, ruta, aliasRecuperado);
+
+                // Sumamos la entidad armada a la lista que enviaremos al controlador.
+                lista.add(apunte);
+                // Cerramos el bucle repetitivo de mapeo.
+            }
+
+            // Atrapamos excepciones de lectura física en el disco.
+        } catch (SQLException e) {
+            // Notificamos el colapso a la consola de IntelliJ sin detener abruptamente Tomcat.
+            System.out.println("ERROR DAO -> Fallo masivo al cargar apuntes JOIN: " + e.getMessage());
+            // Cerramos el control de excepciones.
+        }
+
+        // Retornamos el cargamento de apuntes al ControladorDashboard.
+        return lista;
+        // Cerramos el método de extracción masiva.
+    }
+
+    // NUEVO MÉTODO MAESTRO: Extrae únicamente la biblioteca personal de un estudiante específico.
+    public static List<Apunte> obtenerApuntesPorAutor(int idAutorBusqueda) {
+        // Inicializamos la colección receptora.
+        List<Apunte> lista = new ArrayList<>();
+        // Redactamos la consulta condicionando la búsqueda a la llave foránea.
+        String sql = "SELECT * FROM Apunte WHERE id_autor = ?";
+
+        // Abrimos la sesión de base de datos.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia con el filtro.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el ID del autor al filtro de seguridad.
+            declaracion.setInt(1, idAutorBusqueda);
+
+            // Ejecutamos la búsqueda de alta precisión.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Recorremos los impactos confirmados.
+                while (resultados.next()) {
+                    // Mapeamos ID.
+                    int id = resultados.getInt("id_apunte");
+                    // Mapeamos título.
+                    String titulo = resultados.getString("titulo");
+                    // Mapeamos categoría.
+                    String categoria = resultados.getString("categoria_materia");
+                    // Mapeamos autor numérico.
+                    int idAutor = resultados.getInt("id_autor");
+                    // Mapeamos ruta.
+                    String ruta = resultados.getString("ruta_archivo_fisico").replace("repositorio_nur/", "");
+
+                    // Ensamblamos la entidad (enviamos el alias como desconocido porque en esta vista no es necesario redundar).
+                    Apunte apunte = new Apunte(id, titulo, categoria, idAutor, ruta, "Mi Perfil");
+                    // Añadimos a la colección.
+                    lista.add(apunte);
+                    // Cerramos el bucle.
+                }
+                // Anulamos el ResultSet de la RAM.
+            }
+            // Atrapamos el error.
+        } catch (SQLException e) {
+            // Notificamos a la consola.
+            System.out.println("ERROR DAO -> Fallo al buscar apuntes por autor: " + e.getMessage());
+            // Cerramos el atrapador.
+        }
+        // Devolvemos la biblioteca purificada.
+        return lista;
+        // Cerramos el método de extracción personal.
+    }
+
+    // Método inalterado para extraer la metadata de un solo archivo para procesar su descarga.
+    public static Apunte obtenerPorId(int idApunteBusqueda) {
+        // Redactamos la consulta con llave primaria.
+        String sql = "SELECT * FROM Apunte WHERE id_apunte = ?";
+        // Iniciamos el conducto.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos instrucción.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+            // Filtramos por ID.
+            declaracion.setInt(1, idApunteBusqueda);
+            // Ejecutamos.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si existe el archivo.
+                if (resultados.next()) {
+                    // Reconstruimos la fila en un objeto.
+                    return new Apunte(
+                            resultados.getInt("id_apunte"),
+                            resultados.getString("titulo"),
+                            resultados.getString("categoria_materia"),
+                            resultados.getInt("id_autor"),
+                            resultados.getString("ruta_archivo_fisico"),
+                            "Sistema"
+                    );
+                    // Cerramos condicional.
+                }
+                // Liberamos recursos.
+            }
+            // Atrapamos excepción.
+        } catch (SQLException e) {
+            // Reportamos.
+            System.out.println("ERROR DAO -> Fallo al buscar apunte por ID: " + e.getMessage());
+            // Cerramos catch.
+        }
+        // Retornamos nulo si alguien inventó un ID.
+        return null;
+        // Cerramos método exacto.
+    }
+    // ========================================================================================
+    // MÉTODOS FINANCIEROS Y DE DERECHOS DE PROPIEDAD (TRANSACCIONES)
+    // ========================================================================================
+
+    // Método estático que verifica en el libro mayor si un estudiante ya posee los derechos de un documento.
+    public static boolean verificarAdquisicion(int idComprador, int idApunte) {
+        // Redactamos la consulta condicionada buscando una fila en la tabla intermedia que cruce ambos IDs.
+        // Asumimos que tu tabla de unión se llama 'Adquisicion' (si se llama distinto en InstaladorDB, cámbialo aquí).
+        String sql = "SELECT 1 FROM Adquisicion WHERE id_usuario = ? AND id_apunte = ?";
+
+        // Iniciamos el conducto blindado hacia el archivo SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia para evitar inyecciones de código.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el ID del estudiante en la primera incógnita.
+            declaracion.setInt(1, idComprador);
+            // Inyectamos el ID del documento en la segunda incógnita.
+            declaracion.setInt(2, idApunte);
+
+            // Disparamos la lectura hacia el disco duro.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si el cursor avanza al menos una vez, significa que el recibo de compra existe.
+                return resultados.next();
+                // Cerramos la manipulación del cursor de memoria.
+            }
+
+            // Atrapamos cualquier colapso de comunicación con el archivo de base de datos.
+        } catch (SQLException e) {
+            // Documentamos el error técnico en la terminal de tu entorno de desarrollo.
+            System.out.println("ERROR DAO -> Fallo al verificar la adquisición en el libro mayor: " + e.getMessage());
+            // Cerramos el bloque de contingencia.
+        }
+
+        // Si hay un fallo crítico, devolvemos falso por defecto para proteger la propiedad intelectual.
+        return false;
+        // Cerramos el auditor de adquisiciones.
+    }
+
+    // Método estático que inscribe permanentemente los derechos de descarga en la base de datos tras un pago exitoso.
+    public static boolean registrarAdquisicion(int idComprador, int idApunte) {
+        // Redactamos la sentencia de inserción para crear un nuevo recibo en la tabla intermedia.
+        String sql = "INSERT INTO Adquisicion (id_usuario, id_apunte) VALUES (?, ?)";
+
+        // Iniciamos la sesión transaccional con tu base de datos local.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos el inyector SQL.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos el ID numérico del comprador extraído de la memoria RAM.
+            declaracion.setInt(1, idComprador);
+            // Asignamos el ID del apunte adquirido.
+            declaracion.setInt(2, idApunte);
+
+            // Ejecutamos la orden de escritura y validamos si se alteró exitosamente una fila en el disco.
+            return declaracion.executeUpdate() > 0;
+
+            // Capturamos violaciones de integridad estructural (ej. intentar registrar la misma compra dos veces).
+        } catch (SQLException e) {
+            // Registramos la colisión en la terminal para fines de auditoría.
+            System.out.println("ERROR DAO -> Fallo al registrar la nueva adquisición: " + e.getMessage());
+            // Devolvemos falso para que el MotorEconomia sepa que el proceso físico fracasó.
+            return false;
+            // Cerramos la captura de errores.
+        }
+        // Cerramos el notario de adquisiciones.
+    }
+// Cerramos la clase completa.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ConexionDB.java
+=========================================================================
+package bo.edu.nur;// Importamos la clase Connection del paquete java.sql para mantener activa la sesión con la base de datos.
+import java.sql.Connection;
+// Importamos la clase DriverManager del paquete java.sql para localizar y cargar el controlador específico.
+import java.sql.DriverManager;
+// Importamos la clase SQLException del paquete java.sql para capturar errores de ejecución en el motor relacional.
+import java.sql.SQLException;
+
+// Declaramos la clase pública bo.edu.nur.ConexionDB que funcionará como el puente único entre tu código Java y el archivo de SQLite.
+public class ConexionDB {
+
+    // Declaramos un método público y estático que retorna un objeto Connection para ser invocado globalmente en la plataforma.
+    public static Connection conectar() {
+        // Declaramos la variable de conexión y la inicializamos en null para manejar un estado por defecto si ocurre un fallo.
+        Connection conexion = null;
+
+        // Abrimos un bloque try para intentar ejecutar el código de carga del driver y la comunicación física.
+        try {
+            // Obligamos a la Máquina Virtual de Java a buscar y cargar en memoria la clase exacta del driver de SQLite.
+            // Si el archivo .jar no está correctamente vinculado en IntelliJ, esta línea lanzará un error ClassNotFoundException.
+            Class.forName("org.sqlite.JDBC");
+
+            // Definimos la ruta de conexión (URL) utilizando el protocolo JDBC específico para leer o generar tu archivo local.
+            String url = "jdbc:sqlite:apuntes_nur.db";
+
+            // Invocamos el método getConnection del DriverManager para establecer el enlace físico utilizando la URL.
+            conexion = DriverManager.getConnection(url);
+
+            // Imprimimos un mensaje en la consola de tu IDE para confirmar visualmente que el enlace fue un éxito rotundo.
+            System.out.println("Conexión a SQLite establecida con éxito.");
+
+            // Abrimos un bloque catch múltiple para capturar tanto si falta el archivo .jar como si falla la estructura del archivo.
+        } catch (ClassNotFoundException | SQLException e) {
+            // Imprimimos un mensaje de error crítico y concatenamos el mensaje exacto que devuelve el sistema operativo.
+            // La instrucción e.getMessage() imprimirá la pista absoluta de por qué la base de datos te está rechazando.
+            System.out.println("Error crítico al conectar con la base de datos: " + e.getMessage());
+            // Cerramos la estructura de control estricta de manejo de excepciones.
+        }
+
+        // Retornamos el objeto conexion (ya sea válido con la sesión activa, o null si el proceso falló y fue capturado por el catch).
+        return conexion;
+        // Cerramos el bloque de ejecución correspondiente al método estático conectar().
+    }
+
+// Cerramos el bloque general correspondiente a la declaración estructural de la clase bo.edu.nur.ConexionDB.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ConfiguracionRecursos.java
+=========================================================================
+// Declaramos el paquete central.
+package bo.edu.nur;
+
+// Importamos Configuration para que Spring Boot ejecute esto antes de encender la red.
+import org.springframework.context.annotation.Configuration;
+// Importamos ResourceHandlerRegistry para manipular las rutas de acceso público.
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+// Importamos WebMvcConfigurer para alterar el comportamiento del motor Tomcat.
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+// Inyectamos el decorador arquitectónico maestro.
+@Configuration
+// Declaramos la clase que abrirá los puertos de lectura hacia el disco duro.
+public class ConfiguracionRecursos implements WebMvcConfigurer {
+
+    // Sobrescribimos el método nativo de asignación de recursos.
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registro) {
+        // Ordenamos al servidor que cualquier petición HTTP que comience con /previews/ sea redirigida a tu carpeta física.
+        registro.addResourceHandler("/previews/**")
+                // Mapeamos la URL virtual hacia la ruta física estricta en el sistema de archivos (file:).
+                .addResourceLocations("file:repositorio_nur/previews/");
+        // Cerramos la asignación de puertos.
+    }
+// Cerramos la clase de configuración perimetral.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorApunte.java
+=========================================================================
+// Declaramos la pertenencia del archivo a la arquitectura base del proyecto universitario.
+package bo.edu.nur;
+
+// Importamos la clase abstracta File para manipular archivos y directorios del sistema operativo.
+import java.io.File;
+// Importamos la captura de errores de entrada y salida para evitar colapsos por falta de espacio.
+import java.io.IOException;
+// Importamos la utilidad Files para gestionar el copiado binario de disco a disco.
+import java.nio.file.Files;
+// Importamos la interfaz Path para definir direcciones lógicas dentro del disco duro.
+import java.nio.file.Path;
+// Importamos la fábrica Paths para construir direcciones legibles.
+import java.nio.file.Paths;
+// Importamos la bandera de copia que forzará el reemplazo de archivos si detecta colisiones de disco.
+import java.nio.file.StandardCopyOption;
+// Importamos el motor matemático para generar cadenas UUID únicas en el universo.
+import java.util.UUID;
+
+// Importamos la anotación que convierte a esta clase en un punto final (Endpoint) REST.
+import org.springframework.web.bind.annotation.RestController;
+// Importamos el receptor de peticiones de subida (POST).
+import org.springframework.web.bind.annotation.PostMapping;
+// Importamos el extractor de variables inyectadas desde los formularios HTML.
+import org.springframework.web.bind.annotation.RequestParam;
+// Importamos la interfaz MultipartFile para recibir secuencias de bytes pesadas.
+import org.springframework.web.multipart.MultipartFile;
+// Importamos el gestor de memoria temporal para autenticar a los estudiantes conectados.
+import jakarta.servlet.http.HttpSession;
+
+// Registramos este componente en el escáner de Spring Boot.
+@RestController
+// Declaramos la clase pública que gestionará el tráfico de la propiedad intelectual.
+public class ControladorApunte {
+
+    // Asignamos la ruta estricta '/subir-apunte' a este método interceptor.
+    @PostMapping("/subir-apunte")
+    // Declaramos la firma del método exigiendo el título, la materia, el archivo binario y la sesión HTTP.
+    public String procesarSubida(@RequestParam("tituloApunte") String titulo,
+                                 @RequestParam("categoriaMateria") String categoria,
+                                 @RequestParam("archivoFisico") MultipartFile archivo,
+                                 HttpSession sesion) {
+
+        // ====================================================================================
+        // FASE A: BARRERA PERIMETRAL DE SEGURIDAD
+        // ====================================================================================
+
+        // Rescatamos el alias del estudiante desde la RAM para comprobar su legitimidad.
+        String aliasUsuario = (String) sesion.getAttribute("usuarioLogueado");
+
+        // Si la sesión no existe, un atacante o usuario no registrado intentó forzar una petición.
+        if (aliasUsuario == null) {
+            // Rechazamos el acceso e impedimos la lectura del archivo.
+            return "<h2>Acceso Denegado</h2><p>Debes iniciar sesión para subir apuntes en la plataforma de la NUR.</p>";
+            // Cerramos el escudo de sesión.
+        }
+
+        // Analizamos matemáticamente el peso del archivo para abortar si viene vacío o corrupto.
+        if (archivo.isEmpty() || archivo.getSize() < 50) {
+            // Rechazamos la operación para evitar bases de datos sucias y abusos económicos.
+            return "<h2>Fraude Detectado</h2><p>El archivo es inválido, está corrupto o se encuentra completamente vacío.</p>";
+            // Cerramos la validación de integridad de bytes.
+        }
+
+        // Extraemos el nombre original con el que el archivo vivía en la computadora del alumno.
+        String nombreOriginal = archivo.getOriginalFilename();
+
+        // Bloqueo estricto: Si el archivo no termina en ".pdf", lo rechazamos de inmediato.
+        if (nombreOriginal == null || !nombreOriginal.toLowerCase().endsWith(".pdf")) {
+            // Informamos al usuario que solo el formato PDF permite la extracción de previsualizaciones gráficas.
+            return "<h2>Formato Inválido</h2><p>Para asegurar la lectura del sistema, solo se permiten documentos en formato PDF.</p>";
+            // Cerramos la validación de compatibilidad con Apache PDFBox.
+        }
+
+        // ====================================================================================
+        // FASE B: INGENIERÍA DE ANTI-COLISIONES LÓGICAS
+        // ====================================================================================
+
+        // Exigimos a la CPU que calcule un identificador UUID único.
+        String codigoUnico = UUID.randomUUID().toString();
+        // Fusionamos ese código con el nombre del documento para que jamás ocurra una sobrescritura accidental en el disco.
+        String nombreSeguro = codigoUnico + "_" + nombreOriginal;
+
+        // Abrimos el bloque crítico de transacciones de I/O (Input/Output).
+        try {
+
+            // ====================================================================================
+            // FASE C: PERSISTENCIA FÍSICA BINARIA
+            // ====================================================================================
+
+            // Definimos el nombre del directorio raíz donde residirán todos los aportes de la universidad.
+            String nombreCarpeta = "repositorio_nur/";
+            // Instanciamos el objeto File apuntando a esa carpeta.
+            File directorioDestino = new File(nombreCarpeta);
+
+            // Si el directorio no existe físicamente, ordenamos su construcción automática.
+            if (!directorioDestino.exists()) {
+                // Ejecutamos la creación del árbol de carpetas.
+                directorioDestino.mkdirs();
+                // Cerramos chequeo del directorio padre.
+            }
+
+            // Instanciamos un objeto File apuntando a la subcarpeta que alojará las fotos de portada (Thumbnails).
+            File directorioPreviews = new File(nombreCarpeta + "previews/");
+
+            // Si la subcarpeta de imágenes no existe, ordenamos que sea construida.
+            if (!directorioPreviews.exists()) {
+                // Ejecutamos la creación de la carpeta de miniaturas.
+                directorioPreviews.mkdirs();
+                // Cerramos chequeo de la bóveda fotográfica.
+            }
+
+            // Calculamos la ruta matemática exacta donde el PDF del alumno se guardará de forma definitiva.
+            Path rutaFinal = Paths.get(nombreCarpeta + nombreSeguro);
+            // Ordenamos al sistema operativo que copie el flujo de datos desde la RAM hacia el archivo final en el disco SSD.
+            Files.copy(archivo.getInputStream(), rutaFinal, StandardCopyOption.REPLACE_EXISTING);
+
+            // ====================================================================================
+            // FASE D: EXTRACCIÓN GRÁFICA (GENERACIÓN DE LA MINIATURA)
+            // ====================================================================================
+
+            // Calculamos la ruta exacta donde queremos que la fotografía JPG resultante se almacene.
+            // Le concatenamos ".jpg" al nombre del PDF (Ejemplo final: 123_calculo.pdf.jpg).
+            String rutaPreview = nombreCarpeta + "previews/" + nombreSeguro + ".jpg";
+
+            // Invocamos a nuestro motor de renderizado pasando la ruta del PDF de origen y la ruta de destino fotográfica.
+            GeneradorMiniaturas.generar(rutaFinal.toString(), rutaPreview);
+
+            // ====================================================================================
+            // FASE E: PERSISTENCIA RELACIONAL (SQLite) Y GAMIFICACIÓN
+            // ====================================================================================
+
+            // Interrogamos a la base de datos para traducir el nombre de usuario (alias) a su Llave Primaria numérica (ID).
+            int idAutor = UsuarioDAO.obtenerIdPorAlias(aliasUsuario);
+
+            // Comprobamos que la cuenta del estudiante siga existiendo.
+            if (idAutor != -1) {
+                // Construimos el objeto relacional del Apunte con el título, categoría, creador y la ruta segura.
+                Apunte documento = new Apunte(titulo, categoria, idAutor, nombreSeguro);
+                // Instruimos al DAO para inyectar este nuevo registro en el archivo de SQLite.
+                ApunteDAO.registrarApunte(documento);
+
+                // Llamamos a la banca virtual para depositarle al creador su incentivo económico por subir material.
+                UsuarioDAO.sumarCreditos(idAutor, MotorEconomia.RECOMPENSA_SUBIDA);
+                // Cerramos el bloque de transacciones de base de datos.
+            }
+
+            // Renderizamos un mensaje de éxito HTML crudo notificando la validación del apunte y la inyección financiera.
+            return "<h2>¡Aporte Validado y Procesado!</h2><p>El documento y su previsualización fueron asegurados. ¡Ganaste " + MotorEconomia.RECOMPENSA_SUBIDA + " créditos!</p><br><a href='/dashboard'>Volver a la Tienda</a>";
+
+            // Capturamos violaciones de escritura físicas.
+        } catch (IOException e) {
+            // Imprimimos la traza de colapso en la terminal roja de IntelliJ.
+            System.out.println("ERROR I/O -> Fallo físico al escribir binarios en disco: " + e.getMessage());
+            // Mostramos una alerta crítica al usuario.
+            return "<h2>Fallo del Servidor</h2><p>Imposible almacenar el documento en los discos de la universidad.</p>";
+            // Cerramos el paracaídas de excepciones.
+        }
+        // Cerramos el algoritmo maestro del punto final (Endpoint) de subidas.
+    }
+// Cerramos la estructura absoluta de la clase controladora.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorDashboard.java
+=========================================================================
+// Declaramos el paquete estructural de la universidad.
+package bo.edu.nur;
+
+// Importamos el estereotipo Controller para habilitar el motor MVC.
+import org.springframework.stereotype.Controller;
+// Importamos GetMapping para interceptar la ruta principal.
+import org.springframework.web.bind.annotation.GetMapping;
+// Importamos Model para inyectar variables nativas hacia Thymeleaf.
+import org.springframework.ui.Model;
+// Importamos ArrayList para poder crear listas simuladas temporalmente.
+import java.util.ArrayList;
+// Importamos List para manejar las colecciones dinámicas de datos.
+import java.util.List;
+// Importamos HttpSession para extraer la memoria temporal del estudiante.
+import jakarta.servlet.http.HttpSession;
+
+// Inyectamos el decorador para que el radar de Spring Boot registre esta clase.
+@Controller
+// Declaramos la clase que orquestará el renderizado masivo de la Single Page Application (SPA).
+public class ControladorDashboard {
+
+    // Enrutamos la petición HTTP GET hacia la raíz del panel de control.
+    @GetMapping("/dashboard")
+    // Declaramos el método maestro que orquesta la carga de todas las pestañas simultáneamente.
+    public String mostrarDashboard(Model modelo, HttpSession sesion) {
+
+        // ====================================================================================
+        // FASE 1: BARRERA PERIMETRAL DE SEGURIDAD
+        // ====================================================================================
+
+        // Extraemos el alias almacenado en la memoria RAM tras el inicio de sesión.
+        String aliasSesion = (String) sesion.getAttribute("usuarioLogueado");
+
+        // Evaluamos si un intruso intenta acceder directamente por la barra de URL.
+        if (aliasSesion == null) {
+            // Expulsamos al anónimo hacia el login público.
+            return "redirect:/";
+            // Cerramos el control de acceso.
+        }
+
+        // ====================================================================================
+        // FASE 2: EXTRACCIÓN MASIVA DE DATOS PARA TODAS LAS PESTAÑAS
+        // ====================================================================================
+
+        // PESTAÑA 1: Consultamos al estudiante conectado para la telemetría general.
+        Usuario estudiante = UsuarioDAO.obtenerPorAlias(aliasSesion);
+
+        // PESTAÑA 2 (TIENDA GLOBAL): Extraemos absolutamente todos los apuntes del sistema.
+        List<Apunte> catalogoGlobal = ApunteDAO.obtenerTodosLosApuntes();
+
+        // PESTAÑA 3 (MI BIBLIOTECA): Extraemos los apuntes que este estudiante ha subido.
+        // NOTA: Más adelante crearemos un método DAO para unir esto con los que ha COMPRADO.
+        List<Apunte> miBiblioteca = ApunteDAO.obtenerApuntesPorAutor(estudiante.getIdUsuario());
+
+        // PESTAÑA 4 (SALÓN DE LA FAMA): Simulamos temporalmente a los 3 mejores estudiantes.
+        // MOCK DATA: Preparación arquitectónica hasta que conectemos el algoritmo de ranking SQL.
+        List<Usuario> rankingTop3 = new ArrayList<>();
+        // Inyectamos un perfil simulado de alto rendimiento.
+        rankingTop3.add(new Usuario(1, "lucca_dev", "Lucca Ortiz", "REG-2026", "hash", 1500, 12, "Hoy"));
+        // Inyectamos el segundo lugar.
+        rankingTop3.add(new Usuario(2, "estudiante_pro", "Carlos Tester", "REG-9999", "hash", 1200, 5, "Hoy"));
+        // Inyectamos el tercer lugar.
+        rankingTop3.add(new Usuario(3, "Mendo", "Adrian Pedriel", "REG-123", "hash", 950, 2, "Ayer"));
+
+        // ====================================================================================
+        // FASE 3: INYECCIÓN DE VARIABLES AL MOTOR DE RENDERIZADO (THYMELEAF)
+        // ====================================================================================
+
+        // Inyectamos el alias para la barra superior.
+        modelo.addAttribute("alias", estudiante.getAlias());
+        // Inyectamos la billetera del estudiante.
+        modelo.addAttribute("creditos", estudiante.getCreditos());
+
+        // Inyectamos la colección para la pestaña "Tienda Global".
+        modelo.addAttribute("listaApuntes", catalogoGlobal);
+        // Inyectamos la colección filtrada para la pestaña "Mi Biblioteca".
+        modelo.addAttribute("misApuntes", miBiblioteca);
+        // Inyectamos la colección de élite para el "Salón de la Fama".
+        modelo.addAttribute("rankingEstudiantes", rankingTop3);
+
+        // Ordenamos al servidor ensamblar el 'dashboard.html' y dispararlo por la red.
+        return "Dashboard";
+
+        // Cerramos el método orquestador.
+    }
+// Cerramos la clase del controlador.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorDescarga.java
+=========================================================================
+// Definimos el paquete estructural del proyecto de la universidad NUR.
+package bo.edu.nur;
+
+// Importamos la clase para manejar archivos físicos como recursos de Spring.
+import org.springframework.core.io.FileSystemResource;
+// Importamos la interfaz de recurso genérico para la transferencia de bytes.
+import org.springframework.core.io.Resource;
+// Importamos las cabeceras HTTP para configurar la disposición del archivo.
+import org.springframework.http.HttpHeaders;
+// Importamos el tipo de medio HTTP para especificar que transferiremos un binario.
+import org.springframework.http.MediaType;
+// Importamos la entidad de respuesta HTTP para controlar códigos de estado.
+import org.springframework.http.ResponseEntity;
+// Importamos el controlador de Spring MVC para exponer endpoints de red.
+import org.springframework.stereotype.Controller;
+// Importamos el mapeador de peticiones GET para la descarga de archivos.
+import org.springframework.web.bind.annotation.GetMapping;
+// Importamos el extractor de parámetros obligatorios de la URL HTTP.
+import org.springframework.web.bind.annotation.RequestParam;
+// Importamos el gestor de sesión para auditar la identidad del alumno conectado.
+import jakarta.servlet.http.HttpSession;
+// Importamos la clase nativa para validar la existencia física de rutas en disco.
+import java.io.File;
+
+// Registramos la clase como un controlador MVC tradicional en el contenedor de Spring.
+@Controller
+// Definimos la clase encargada de la lógica transaccional de descargas y cobros.
+public class ControladorDescarga {
+
+    // Mapeamos la ruta de descarga para escuchar peticiones GET en "/descargar-apunte".
+    @GetMapping("/descargar-apunte")
+    // Declaramos el método que procesa la transacción exigiendo el ID del apunte y la sesión.
+    public ResponseEntity<Resource> descargarApunte(@RequestParam("idApunte") int idApunte, HttpSession sesion) {
+
+        // Extraemos el alias de la sesión para comprobar si el estudiante está autenticado.
+        String aliasUsuario = (String) sesion.getAttribute("usuarioLogueado");
+
+        // Si la sesión no existe, bloqueamos la descarga devolviendo un estado 401 desautorizado.
+        if (aliasUsuario == null) {
+            // Retornamos una respuesta HTTP de estado "No Autorizado".
+            return ResponseEntity.status(401).build();
+            // Cerramos la barrera de seguridad de sesión.
+        }
+
+        // Consultamos al DAO para extraer los metadatos completos del apunte usando su ID.
+        Apunte apunte = ApunteDAO.obtenerApuntesPorAutor(idAcorde); // Nota: ApunteDAO debe proveer este método de selección por ID.
+
+        // Si el objeto apunte es nulo, significa que el ID no existe en SQLite y lanzamos un 404.
+        if (apunte == null) {
+            // Retornamos un estado HTTP "No Encontrado".
+            return ResponseEntity.notFound().build();
+            // Cerramos la validación relacional del apunte.
+        }
+
+        // Consultamos al DAO el perfil completo del estudiante que desea realizar la descarga.
+        Usuario estudiante = UsuarioDAO.obtenerPorAlias(aliasUsuario);
+
+        // Si el estudiante no existe en el sistema por un error imprevisto, lanzamos un 404.
+        if (estudiante == null) {
+            // Retornamos una respuesta HTTP vacía de error.
+            return ResponseEntity.notFound().build();
+            // Cerramos la comprobación del perfil del comprador.
+        }
+
+        // Construimos la ruta física absoluta combinando el directorio raíz y el nombre seguro con UUID.
+        String rutaFisica = "repositorio_nur/" + apunte.getRutaArchivoFisico();
+        // Instanciamos un puntero de archivo File sobre la ruta calculada.
+        File archivo = new File(rutaFisica);
+
+        // Comprobamos si el archivo PDF realmente existe físicamente en el disco duro de la máquina.
+        if (!archivo.exists()) {
+            // Si el archivo fue borrado del disco, devolvemos un código HTTP 404.
+            return ResponseEntity.notFound().build();
+            // Cerramos la verificación de persistencia física.
+        }
+
+        // Evaluamos algebraicamente si el estudiante NO es el autor del apunte que intenta bajar.
+        if (estudiante.getIdUsuario() != apunte.getIdAutor()) {
+
+            // Definimos el costo fijo estipulado por nuestro motor de economía académica.
+            int costo = 5;
+
+            // Comprobamos si el capital del estudiante es insuficiente para cubrir la transacción.
+            if (estudiante.getCreditos() < costo) {
+                // Bloqueamos la descarga devolviendo un estado HTTP 403 (Prohibido por insolvencia).
+                return ResponseEntity.status(403).build();
+                // Cerramos el control de fondos.
+            }
+
+            // Ejecutamos la orden DML de cobro en SQLite restando los créditos de su billetera.
+            UsuarioDAO.cobrarCreditos(estudiante.getIdUsuario(), costo);
+            // Compensamos al creador original del documento sumándole las regalías a su cuenta.
+            UsuarioDAO.sumarCreditos(apunte.getIdAutor(), costo);
+            // Cerramos el bloque de validación comercial de autoría.
+        }
+
+        // Encapsulamos el archivo físico dentro de la infraestructura de recursos de Spring.
+        Resource recurso = new FileSystemResource(archivo);
+
+        // Retornamos el archivo empaquetado con código HTTP 200 OK y configuramos las cabeceras de descarga.
+        return ResponseEntity.ok()
+                // Declaramos que el contenido es un flujo binario para forzar la descarga del PDF.
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                // Inyectamos la cabecera Content-Disposition especificando el nombre original del archivo.
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + archivo.getName() + "\"")
+                // Adjuntamos el recurso binario en el cuerpo de la respuesta HTTP.
+                .body(recurso);
+        // Cerramos el método de descarga.
+    }
+// Cerramos la clase del controlador de descargas.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorLogin.java
+=========================================================================
+// Declaramos la pertenencia estricta de la clase al paquete de nuestro proyecto.
+package bo.edu.nur;
+
+// Importamos RestController para habilitar la recepción de peticiones web.
+import org.springframework.web.bind.annotation.RestController;
+// Importamos PostMapping para interceptar los datos enviados por el formulario HTML.
+import org.springframework.web.bind.annotation.PostMapping;
+// Importamos RequestParam para extraer los campos de texto del usuario y la contraseña.
+import org.springframework.web.bind.annotation.RequestParam;
+// Importamos HttpSession nativo de Jakarta para crear una "memoria temporal" que recuerde al usuario.
+import jakarta.servlet.http.HttpSession;
+// Importamos HttpServletResponse para poder darle órdenes directas al navegador web (como redirigir).
+import jakarta.servlet.http.HttpServletResponse;
+// Importamos IOException para manejar errores si la redirección de red falla.
+import java.io.IOException;
+
+// Inyectamos la anotación para que Spring despierte este controlador.
+@RestController
+// Declaramos la clase pública que gestionará el inicio de sesión.
+public class ControladorLogin {
+
+    // Escuchamos la ruta "/login" proveniente del archivo index.html.
+    @PostMapping("/login")
+    // Declaramos el método, ahora inyectando 'HttpSession' y 'HttpServletResponse' para manipular la navegación.
+    public void procesarAcceso(@RequestParam("aliasUsuario") String alias,
+                               @RequestParam("claveUsuario") String clave,
+                               HttpSession sesion,
+                               HttpServletResponse respuesta) throws IOException {
+
+        // Invocamos a tu DAO para verificar matemáticamente si las credenciales coinciden en SQLite.
+        if (UsuarioDAO.validarCredenciales(alias, clave)) {
+            // Si es exitoso, guardamos el alias en la memoria RAM del servidor (Sesión) bajo la llave "usuarioLogueado".
+            sesion.setAttribute("usuarioLogueado", alias);
+            // Ejecutamos una redirección automática forzando al navegador a cargar el Dashboard.
+            respuesta.sendRedirect("/dashboard");
+            // Abrimos la condición por si el usuario se equivoca o intenta entrar por fuerza bruta.
+        } else {
+            // Si falla, lo expulsamos redirigiéndolo de vuelta a la pantalla de inicio (raíz).
+            respuesta.sendRedirect("/");
+            // Cerramos el bloque condicional de validación.
+        }
+
+        // Cerramos la ejecución del método de acceso.
+    }
+
+// Cerramos la arquitectura general de la clase ControladorLogin.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorPerfil.java
+=========================================================================
+// Declaramos el paquete maestro del sistema universitario.
+package bo.edu.nur;
+
+// Importamos la directiva principal para que Spring MVC despierte esta clase.
+import org.springframework.stereotype.Controller;
+// Importamos el escuchador de peticiones HTTP GET.
+import org.springframework.web.bind.annotation.GetMapping;
+// Importamos la herramienta para secuestrar palabras de la URL (Path Variables).
+import org.springframework.web.bind.annotation.PathVariable;
+// Importamos el inyector de datos hacia el HTML.
+import org.springframework.ui.Model;
+// Importamos la interfaz de colecciones iterables.
+import java.util.List;
+// Importamos el gestor de memoria temporal.
+import jakarta.servlet.http.HttpSession;
+
+// Registramos el controlador en el kernel de la aplicación.
+@Controller
+// Declaramos la clase que orquesta la carga visual de la identidad pública.
+public class ControladorPerfil {
+
+    // Forzamos al motor a interceptar cualquier visita al dominio seguida de /perfil/ y un texto.
+    @GetMapping("/perfil/{aliasEstudiante}")
+    // Declaramos el método pasando las variables de entorno, seguridad y enlace.
+    public String verPerfilUsuario(@PathVariable("aliasEstudiante") String alias, Model modelo, HttpSession sesion) {
+
+        // ====================================================================================
+        // FASE 1: BARRERA PERIMETRAL DE PRIVACIDAD
+        // ====================================================================================
+
+        // Rescatamos el nombre del estudiante que está tecleando detrás del monitor.
+        String visitanteActual = (String) sesion.getAttribute("usuarioLogueado");
+
+        // Bloqueamos el paso a usuarios anónimos o no matriculados.
+        if (visitanteActual == null) {
+            // Ejecutamos la orden HTTP 302 de redirección a la raíz pública.
+            return "redirect:/";
+            // Cerramos el control perimetral.
+        }
+
+        // ====================================================================================
+        // FASE 2: INVESTIGACIÓN DE LA BASE DE DATOS
+        // ====================================================================================
+
+        // Consultamos al DAO para confirmar que el alias escrito en la URL es legítimo y extraemos su objeto completo.
+        Usuario propietarioPerfil = UsuarioDAO.obtenerPorAlias(alias);
+
+        // Evaluamos si el perfil fue eliminado o la URL fue adulterada por un atacante.
+        if (propietarioPerfil == null) {
+            // Mandamos al usuario de vuelta al panel con una advertencia de inexistencia.
+            return "redirect:/dashboard?error=perfil_no_encontrado";
+            // Cerramos la validación de integridad referencial.
+        }
+
+        // Ordenamos al DAO que recopile exclusivamente los documentos donde este usuario figura como creador.
+        List<Apunte> bibliotecaPersonal = ApunteDAO.obtenerApuntesPorAutor(propietarioPerfil.getIdUsuario());
+
+        // ====================================================================================
+        // FASE 3: HEURÍSTICA Y MATEMÁTICAS MOCKEADAS (PREPARACIÓN PARA RED SOCIAL)
+        // ====================================================================================
+
+        // Inicializamos la variable que contendrá el resultado de prestigio del estudiante.
+        double promedioEstrellas = 0.0;
+
+        // Verificamos si la colección de aportes no está vacía para evitar fallos matemáticos.
+        if (!bibliotecaPersonal.isEmpty()) {
+            // MOCK DE ARQUITECTURA: Aquí deberás implementar la llamada a ResenaDAO.
+            // Temporalmente forzamos una calificación alta para demostrar la inyección en la vista.
+            promedioEstrellas = 4.5;
+            // Cerramos la lógica de cálculo estadístico.
+        }
+
+        // ====================================================================================
+        // FASE 4: INYECCIÓN DE VARIABLES AL DOM
+        // ====================================================================================
+
+        // Inyectamos el molde del usuario para que Thymeleaf pinte sus datos personales.
+        modelo.addAttribute("perfil", propietarioPerfil);
+        // Inyectamos su repositorio personal para construir la cuadrícula inferior.
+        modelo.addAttribute("listaApuntes", bibliotecaPersonal);
+        // Inyectamos la métrica numérica final formateada a un decimal.
+        modelo.addAttribute("calificacion", promedioEstrellas);
+        // Inyectamos un booleano computado en RAM para saber si el usuario está viendo su propio espejo.
+        modelo.addAttribute("esMiPerfil", alias.equals(visitanteActual));
+
+        // Ordenamos al compilador web que fusione los datos con la plantilla física 'perfil.html'.
+        return "perfil";
+
+        // Cerramos el método maestro de perfiles sociales.
+    }
+// Cerramos la arquitectura inquebrantable de ControladorPerfil.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ControladorRegistro.java
+=========================================================================
+// Declaramos el paquete base de la estructura del proyecto universitario.
+package bo.edu.nur;
+
+// Importamos el estereotipo Controller para que Spring Boot asigne esta clase al motor de vistas MVC.
+import org.springframework.stereotype.Controller;
+// Importamos PostMapping para interceptar los envíos del formulario HTML.
+import org.springframework.web.bind.annotation.PostMapping;
+// Importamos RequestParam para extraer los datos digitados por el estudiante.
+import org.springframework.web.bind.annotation.RequestParam;
+// Importamos la librería de encriptación bcrypt para asegurar la contraseña.
+import org.mindrot.jbcrypt.BCrypt;
+
+// Inyectamos el decorador principal para habilitar la clase en el ecosistema.
+@Controller
+// Declaramos la clase pública que actuará como la aduana de creación de cuentas.
+public class ControladorRegistro {
+
+    // Enrutamos el método para escuchar la acción del formulario HTML.
+    @PostMapping("/procesar-registro")
+    // Declaramos el método maestro exigiendo todos los parámetros del formulario HTML.
+    public String procesarRegistro(@RequestParam("aliasUsuario") String alias,
+                                   @RequestParam("nombreCompleto") String nombre,
+                                   @RequestParam("correoInstitucional") String correo,
+                                   @RequestParam("numeroCredencial") String credencial,
+                                   @RequestParam("contrasena") String contrasenaCruda) {
+
+        // ====================================================================================
+        // FASE 1: GATEKEEPING ESTÁTICO (FORMATOS Y DOMINIO)
+        // ====================================================================================
+
+        // Definimos la expresión regular inquebrantable para forzar exactamente 6 dígitos numéricos.
+        String regexCredencial = "^\\d{6}$";
+
+        // Comprobamos si la credencial viola el formato estandarizado.
+        if (!credencial.matches(regexCredencial)) {
+            // Imprimimos una alerta en la consola advirtiendo del formato inválido.
+            System.out.println("REGISTRO DENEGADO -> La credencial no cumple con los 6 dígitos: " + credencial);
+            // Ejecutamos el retorno anticipado enviando un código de error a la vista.
+            return "redirect:/registro.html?error=credencial_invalida";
+            // Cerramos el filtro de formato de credencial.
+        }
+
+        // Invocamos a la aduana de identidad para verificar el dominio institucional.
+        if (!ValidadorIdentidad.esEstudianteLegitimo(correo)) {
+            // Alertamos en la terminal que un impostor intentó registrarse.
+            System.out.println("REGISTRO DENEGADO -> Intento de registro con dominio no oficial: " + correo);
+            // Abortamos la ejecución y devolvemos al usuario al formulario.
+            return "redirect:/registro.html?error=dominio_invalido_solo_nur";
+            // Cerramos la muralla anti-impostores.
+        }
+
+        // ====================================================================================
+        // FASE 2: SEGURIDAD Y PREPARACIÓN DE DATOS
+        // ====================================================================================
+
+        // Ciframos la contraseña plana usando el algoritmo bcrypt para proteger la base de datos.
+        String contrasenaCifrada = BCrypt.hashpw(contrasenaCruda, BCrypt.gensalt(12));
+
+        // ====================================================================================
+        // FASE 3: MAPEO OBJETO-RELACIONAL EXACTO (ORM)
+        // ====================================================================================
+
+        // CORRECCIÓN: Instanciamos el objeto enviando ESTRICTAMENTE los 4 parámetros que exige tu clase Usuario.java.
+        // El objeto en la memoria RAM se encargará por sí solo de poner sus propios créditos en 0.
+        Usuario nuevoEstudiante = new Usuario(alias, nombre, credencial, contrasenaCifrada);
+
+        // Delegamos al DAO la responsabilidad física de abrir el flujo hacia SQLite y hacer el INSERT.
+        boolean guardadoExitoso = UsuarioDAO.registrarUsuario(nuevoEstudiante);
+
+        // ====================================================================================
+        // FASE 4: ENRUTAMIENTO FINAL
+        // ====================================================================================
+
+        // Evaluamos si el disco duro confirmó la escritura sin colapsar por alias duplicados.
+        if (guardadoExitoso) {
+            // Si la cuenta se materializó, enviamos al estudiante a la pantalla de login con un aviso de éxito.
+            return "redirect:/?exito=cuenta_creada";
+            // En caso de que SQLite levante una excepción.
+        } else {
+            // Informamos a la consola del conflicto de integridad referencial.
+            System.out.println("REGISTRO FALLIDO -> Colisión en SQLite (Alias ya existente).");
+            // Devolvemos al formulario indicando que el nombre de usuario está ocupado.
+            return "redirect:/registro.html?error=alias_duplicado";
+            // Cerramos el bloque de evaluación de persistencia.
+        }
+
+        // Cerramos el método orquestador principal.
+    }
+// Cerramos la estructura defensiva de la clase ControladorRegistro.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: FiltroSeguridad.java
+=========================================================================
+// Declaramos el paquete oficial de nuestra universidad.
+package bo.edu.nur;
+
+// Importamos Component para que el radar de Spring Boot enganche al guardia automáticamente.
+import org.springframework.stereotype.Component;
+// Importamos la interfaz nativa para interceptar el tráfico de red HTTP.
+import jakarta.servlet.Filter;
+// Importamos la cadena de filtros para permitir el paso si el usuario es legítimo.
+import jakarta.servlet.FilterChain;
+// Importamos el lector de peticiones crudas.
+import jakarta.servlet.ServletRequest;
+// Importamos el emisor de respuestas crudas.
+import jakarta.servlet.ServletResponse;
+// Importamos el adaptador HTTP para extraer la URL exacta que solicita el usuario.
+import jakarta.servlet.http.HttpServletRequest;
+// Importamos el adaptador HTTP para ejecutar órdenes de redirección forzada.
+import jakarta.servlet.http.HttpServletResponse;
+// Importamos la sesión para auditar la memoria RAM en busca de credenciales.
+import jakarta.servlet.http.HttpSession;
+// Importamos las excepciones de manipulación de red y E/S.
+import java.io.IOException;
+import jakarta.servlet.ServletException;
+
+// Registramos el filtro en el ecosistema central de la aplicación.
+@Component
+// Declaramos la clase blindada.
+public class FiltroSeguridad implements Filter {
+
+    // Sobrescribimos el interceptor que se dispara milisegundos antes de abrir cualquier URL.
+    @Override
+    public void doFilter(ServletRequest peticion, ServletResponse respuesta, FilterChain cadena) throws IOException, ServletException {
+
+        // Transformamos (Casteo) los objetos genéricos a su versión HTTP para acceder a sus rutinas de navegación.
+        HttpServletRequest req = (HttpServletRequest) peticion;
+        HttpServletResponse res = (HttpServletResponse) respuesta;
+
+        // Extraemos la ruta final solicitada (Ej: "/dashboard").
+        String ruta = req.getRequestURI();
+
+        // BUG FIX: Verificamos de forma estricta la ruta del nuevo endpoint del controlador, sin el ".html".
+        if (ruta.equals("/dashboard")) {
+
+            // Solicitamos acceso a la memoria temporal (false = no crear una sesión nueva si está vacía).
+            HttpSession sesion = req.getSession(false);
+
+            // Evaluamos algebraicamente: Si no hay memoria OR si la variable 'usuarioLogueado' no existe...
+            if (sesion == null || sesion.getAttribute("usuarioLogueado") == null) {
+                // Denegamos el acceso al DOM central y pateamos al intruso hacia la pantalla pública (raíz).
+                res.sendRedirect("/");
+                // Abortamos la ejecución del método para evitar procesamientos posteriores.
+                return;
+                // Cerramos condición de intrusión.
+            }
+            // Cerramos el análisis de la ruta protegida.
+        }
+
+        // Si la ruta no está protegida o el estudiante es legítimo, cedemos el control para que el navegador cargue el HTML.
+        cadena.doFilter(peticion, respuesta);
+
+        // Cerramos el interceptor de red.
+    }
+// Cerramos la arquitectura del perímetro de seguridad.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: GeneradorMiniaturas.java
+=========================================================================
+// Declaramos el paquete estructural de la universidad.
+package bo.edu.nur;
+
+// Importamos el lector de documentos PDF de Apache.
+import org.apache.pdfbox.pdmodel.PDDocument;
+// Importamos el motor de renderizado gráfico nativo.
+import org.apache.pdfbox.rendering.PDFRenderer;
+// Importamos la herramienta de escritura de imágenes hacia el disco duro.
+import javax.imageio.ImageIO;
+// Importamos la matriz de imagen para alojar los píxeles en la memoria RAM.
+import java.awt.image.BufferedImage;
+// Importamos el manejador de rutas del sistema operativo.
+import java.io.File;
+
+// Declaramos la clase utilitaria que procesará los binarios pesados.
+public class GeneradorMiniaturas {
+
+    // Método estático que exige la ruta del PDF de origen y la ruta del JPG de destino.
+    public static void generar(String rutaPdfFisico, String rutaDestinoJpg) {
+
+        // Creamos un puntero en memoria hacia el archivo PDF real.
+        File archivoPdf = new File(rutaPdfFisico);
+
+        // Blindaje matemático: Si el archivo no existe o no es PDF, abortamos instantáneamente para evitar un NullPointerException.
+        if (!archivoPdf.exists() || !rutaPdfFisico.toLowerCase().endsWith(".pdf")) {
+            return;
+        }
+
+        // Iniciamos el conducto blindado de memoria (try-with-resources) para leer el archivo pesado.
+        try (PDDocument documento = PDDocument.load(archivoPdf)) {
+
+            // Instanciamos el motor de renderizado sobre el documento recién cargado en RAM.
+            PDFRenderer renderizador = new PDFRenderer(documento);
+
+            // Renderizamos exclusivamente la primera página (índice 0) a 100 DPI para optimizar rendimiento de CPU.
+            BufferedImage imagenPortada = renderizador.renderImageWithDPI(0, 100);
+
+            // Escribimos la matriz de píxeles en el disco duro forzando el estándar de compresión JPEG.
+            ImageIO.write(imagenPortada, "JPEG", new File(rutaDestinoJpg));
+
+            // Atrapamos colapsos físicos, archivos corruptos o encriptados.
+        } catch (Exception e) {
+            // Imprimimos el diagnóstico en la terminal roja para auditoría.
+            System.out.println("ERROR PDFBOX -> Falla al extraer miniatura: " + e.getMessage());
+            // Cerramos el control de excepciones.
+        }
+        // Cerramos la función destructora/constructora.
+    }
+// Cerramos la arquitectura gráfica.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: InstaladorDB.java
+=========================================================================
+// Declaramos el paquete estructural que contiene la configuración del servidor.
+package bo.edu.nur;
+
+// Importamos la interfaz nativa para manejar el conducto hacia el archivo SQLite.
+import java.sql.Connection;
+// Importamos la interfaz para enviar sentencias SQL crudas al motor de base de datos.
+import java.sql.Statement;
+// Importamos la clase de excepción para capturar colapsos físicos del disco.
+import java.sql.SQLException;
+
+// Declaramos la clase constructora que actuará como el albañil de nuestra base de datos.
+public class InstaladorDB {
+
+    // Declaramos el método público y estático que debe ser invocado al arrancar el servidor (en el Main).
+    public static void inicializarBaseDeDatos() {
+
+        // Iniciamos un bloque try-with-resources para garantizar el cierre hermético de la conexión y evitar fugas de RAM en tu HP Celeron.
+        try (Connection conexion = ConexionDB.conectar();
+             // Creamos el objeto instanciado que transportará nuestras órdenes SQL. AQUÍ NACE LA VARIABLE 'declaracion'.
+             Statement declaracion = conexion.createStatement()) {
+
+            // ========================================================================================
+            // FASE 1: CREACIÓN DE LA TABLA PADRE 'USUARIO'
+            // ========================================================================================
+
+            // Redactamos el esquema DDL para la tabla que almacenará a los estudiantes de la universidad.
+            String sqlUsuario = "CREATE TABLE IF NOT EXISTS Usuario ("
+                    // Llave primaria auto-incremental delegada al motor SQLite.
+                    + "id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    // Alias único para el acceso a la plataforma.
+                    + "alias TEXT UNIQUE NOT NULL, "
+                    // Nombre real y legal del estudiante.
+                    + "nombre TEXT NOT NULL, "
+                    // Credencial de 6 dígitos validada previamente en el controlador.
+                    + "credencial TEXT NOT NULL, "
+                    // Hash criptográfico Bcrypt de la contraseña.
+                    + "clave TEXT NOT NULL, "
+                    // Billetera virtual inicializada por defecto.
+                    + "creditos INTEGER DEFAULT 0, "
+                    // Racha de inicio de sesión diario.
+                    + "racha_dias INTEGER DEFAULT 1, "
+                    // Estampa temporal de la creación de la cuenta.
+                    + "ultima_fecha_login TEXT NOT NULL"
+                    // Cerramos la definición de la tabla Usuario.
+                    + ");";
+
+            // Ejecutamos la orden de construcción en el disco duro.
+            declaracion.execute(sqlUsuario);
+
+            // ========================================================================================
+            // FASE 2: CREACIÓN DE LA TABLA 'APUNTE'
+            // ========================================================================================
+
+            // Redactamos el esquema DDL para el catálogo de documentos.
+            String sqlApunte = "CREATE TABLE IF NOT EXISTS Apunte ("
+                    // Llave primaria auto-incremental para el documento.
+                    + "id_apunte INTEGER PRIMARY KEY AUTOINCREMENT, "
+                    // Nombre comercial del resumen o documento.
+                    + "titulo TEXT NOT NULL, "
+                    // Clasificación taxonómica (Álgebra, Programación, etc.).
+                    + "categoria_materia TEXT NOT NULL, "
+                    // Llave foránea que enlaza el documento con su creador.
+                    + "id_autor INTEGER NOT NULL, "
+                    // Ruta local encriptada hacia el binario físico (.pdf o .md).
+                    + "ruta_archivo_fisico TEXT NOT NULL, "
+                    // Imponemos la restricción relacional: el autor debe existir en la tabla Usuario.
+                    + "FOREIGN KEY (id_autor) REFERENCES Usuario(id_usuario) ON DELETE CASCADE"
+                    // Cerramos la definición de la tabla Apunte.
+                    + ");";
+
+            // Ejecutamos la orden de construcción en el disco duro.
+            declaracion.execute(sqlApunte);
+
+            // ========================================================================================
+            // FASE 3: CREACIÓN DE LA TABLA PUENTE 'ADQUISICION' (LIBRO MAYOR N:M)
+            // ========================================================================================
+
+            // Redactamos el esquema DDL para registrar los derechos de propiedad intelectual pagados.
+            String sqlAdquisicion = "CREATE TABLE IF NOT EXISTS Adquisicion ("
+                    // Columna para la llave foránea del estudiante que compra.
+                    + "id_usuario INTEGER NOT NULL, "
+                    // Columna para la llave foránea del documento comprado.
+                    + "id_apunte INTEGER NOT NULL, "
+                    // Auditoría temporal de la transacción automática.
+                    + "fecha_compra DATETIME DEFAULT CURRENT_TIMESTAMP, "
+                    // Llave primaria compuesta: un estudiante no puede comprar el mismo apunte dos veces.
+                    + "PRIMARY KEY (id_usuario, id_apunte), "
+                    // Restricción relacional estricta hacia el comprador.
+                    + "FOREIGN KEY (id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE, "
+                    // Restricción relacional estricta hacia el producto intelectual.
+                    + "FOREIGN KEY (id_apunte) REFERENCES Apunte(id_apunte) ON DELETE CASCADE"
+                    // Cerramos la definición de la tabla puente.
+                    + ");";
+
+            // Ejecutamos la orden definitiva de construcción estructural.
+            declaracion.execute(sqlAdquisicion);
+
+            // Imprimimos un registro de éxito rotundo en la terminal de diagnóstico de IntelliJ.
+            System.out.println("INSTALADOR -> Estructura relacional completa (Usuario, Apunte, Adquisicion) validada con éxito en SQLite.");
+
+            // Atrapamos cualquier anomalía de I/O o bloqueos del archivo .db a nivel de sistema operativo.
+        } catch (SQLException e) {
+            // Documentamos la falla crítica para evitar que pase desapercibida.
+            System.out.println("ERROR CRÍTICO AL INICIALIZAR LA BASE DE DATOS -> " + e.getMessage());
+            // Cerramos el bloque de contingencia de fallos.
+        }
+        // Cerramos el método arquitectónico maestro.
+    }
+// Cerramos la clase InstaladorDB.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: Main.java
+=========================================================================
+// Declaramos que esta clase pertenece al paquete principal de la universidad para evitar el escaneo global.
+package bo.edu.nur;
+
+// Importamos la clase SpringApplication para levantar el servidor web en memoria.
+import org.springframework.boot.SpringApplication;
+// Importamos la anotación SpringBootApplication para orquestar los componentes del proyecto.
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+// Importamos la clase DataSourceAutoConfiguration para poder referenciarla y apagarla.
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+
+// Inyectamos la anotación maestra, pero le agregamos el parámetro "exclude" para apagar la auto-conexión a la base de datos.
+// Esto obliga a Spring Boot a respetar nuestra clase ConexionDB manual.
+@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+public class Main {
+
+    // Declaramos el método principal de ejecución.
+    public static void main(String[] args) {
+        // Ejecutamos el servidor web aislado de los conflictos de base de datos.
+        SpringApplication.run(Main.class, args);
+        // Cerramos el bloque de ejecución del método main.
+    }
+
+// Cerramos la declaración general de tu clase Main.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: MotorEconomia.java
+=========================================================================
+// Declaramos el paquete oficial de la universidad NUR para mantener la cohesión estricta del proyecto.
+package bo.edu.nur;
+
+// Declaramos la clase MotorEconomia que centraliza absolutamente todas las reglas financieras del sistema.
+public class MotorEconomia {
+
+    // Definimos el costo estándar e inmutable para desbloquear cualquier documento en la plataforma.
+    public static final int COSTO_DESCARGA = 5;
+    // Definimos la recompensa estática que recibe un estudiante por aportar material nuevo al repositorio.
+    public static final int RECOMPENSA_SUBIDA = 10;
+    // Definimos el incentivo económico para fomentar que los alumnos califiquen y depuren los apuntes.
+    public static final int RECOMPENSA_RESENA = 2;
+    // Definimos el capital semilla o bono inicial para inyectar en SQLite y evitar que los nuevos se frustren.
+    public static final int BONO_BIENVENIDA = 50;
+
+    // Declaramos un método estático y rápido para validar matemáticamente si un saldo es suficiente.
+    public static boolean puedeDescargar(int saldoActual) {
+        // Retornamos el resultado de la evaluación lógica comparando el dinero del usuario con el costo estricto.
+        return saldoActual >= COSTO_DESCARGA;
+        // Cerramos el método de validación algorítmica simple.
+    }
+
+    // Declaramos el método orquestador para procesar una compra segura y atómica entre dos estudiantes.
+    public static boolean procesarAdquisicionSegura(int idComprador, int idApunte) {
+        // Invocamos al DAO para extraer la metadata del documento exacto desde la base de datos de SQLite.
+        Apunte apunteObjetivo = ApunteDAO.obtenerPorId(idApunte);
+
+        // Verificamos de forma defensiva si el documento es nulo (fue borrado físicamente o no existe).
+        if (apunteObjetivo == null) {
+            // Abortamos la transacción inmediatamente retornando falso para proteger la integridad.
+            return false;
+            // Cerramos la barrera de validación de existencia.
+        }
+
+        // Verificamos lógicamente si el estudiante está intentando comprar su propio archivo Markdown o PDF.
+        if (apunteObjetivo.getIdAutor() == idComprador) {
+            // Bloqueamos la auto-compra porque el "farmeo" de descargas destruye la economía circular del sistema.
+            return false;
+            // Cerramos la validación de propiedad intelectual original.
+        }
+
+        // Consultamos a la biblioteca transaccional si el usuario ya pagó por este apunte en el pasado.
+        boolean yaComprado = ApunteDAO.verificarAdquisicion(idComprador, idApunte);
+
+        // Evaluamos el resultado booleano de la consulta de pertenencia en disco.
+        if (yaComprado) {
+            // Retornamos verdadero de inmediato para que descargue gratis, pues ya posee los derechos perpetuos.
+            return true;
+            // Cerramos el bloque de validación de compras duplicadas.
+        }
+
+        // Averiguamos cuánto dinero digital tiene exactamente el comprador en su bóveda consultando SQLite.
+        int saldoComprador = UsuarioDAO.consultarSaldo(idComprador);
+
+        // Invocamos la regla de negocio para comprobar si sus fondos superan o igualan la barrera de peaje.
+        if (!puedeDescargar(saldoComprador)) {
+            // Rechazamos la petición de compra por insolvencia económica del estudiante.
+            return false;
+            // Cerramos la muralla de validación de fondos líquidos.
+        }
+
+        // Fase 1 de la Transacción: Le sustraemos el importe de los créditos al estudiante comprador.
+        UsuarioDAO.sumarCreditos(idComprador, COSTO_DESCARGA);
+
+        // Fase 2 de la Transacción: Le transferimos esa misma cantidad matemática al creador del documento.
+        UsuarioDAO.sumarCreditos(apunteObjetivo.getIdAutor(), COSTO_DESCARGA);
+
+        // Fase 3 de la Transacción: Registramos legalmente la compra en la tabla intermedia y aumentamos la fama del archivo.
+        ApunteDAO.registrarAdquisicion(idComprador, idApunte);
+
+        // Concluimos retornando verdadero, garantizando que toda la operación atómica fue un éxito rotundo.
+        return true;
+        // Cerramos el método maestro de orquestación transaccional.
+    }
+
+// Cerramos la arquitectura inquebrantable de la clase MotorEconomia.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: Resena.java
+=========================================================================
+// Declaramos la pertenencia estricta de esta clase al paquete principal de la aplicación universitaria.
+package bo.edu.nur;
+
+// Importamos la clase LocalDate para poder sellar temporalmente el momento exacto en el que se emite la calificación.
+import java.time.LocalDate;
+
+// Declaramos la clase pública Resena que funcionará como el modelo de datos para las opiniones y votos.
+public class Resena {
+
+    // Declaramos el atributo privado entero que funciona como la primera llave foránea apuntando al documento evaluado.
+    private int idApunte;
+    // Declaramos el atributo privado entero que funciona como la segunda llave foránea apuntando al estudiante que opina.
+    private int idUsuario;
+    // Declaramos el atributo privado entero para cuantificar la calidad del material en un rango cerrado (ej. 1 a 5).
+    private int estrellas;
+    // Declaramos el atributo privado de texto para que el estudiante justifique su calificación con una crítica escrita.
+    private String comentario;
+    // Declaramos el atributo privado de fecha para mantener una auditoría cronológica exacta de las transacciones.
+    private LocalDate fechaRegistro;
+
+    // Definimos el constructor principal para crear una reseña en el momento en que el servidor web la recibe.
+    public Resena(int apunte, int usuario, int calificacion, String texto) {
+        // Vinculamos la reseña con su documento, inyectando el parámetro recibido hacia el atributo interno de la instancia.
+        this.idApunte = apunte;
+        // Vinculamos la reseña con su creador asignando el ID del usuario directamente al estado del objeto.
+        this.idUsuario = usuario;
+        // Asignamos la nota numérica provista para persistirla en el atributo privado de estrellas.
+        this.estrellas = calificacion;
+        // Guardamos el texto descriptivo del estudiante en la variable de encapsulamiento de comentario.
+        this.comentario = texto;
+        // Invocamos la función estática del sistema operativo para capturar el día y mes exacto de la transacción en curso.
+        this.fechaRegistro = LocalDate.now();
+        // Cerramos el bloque lógico fundamental del constructor de reseñas.
+    }
+
+    // Definimos un método público que devuelve el identificador numérico de la tabla de apuntes.
+    public int obtenerIdApunte() {
+        // Retornamos el valor entero almacenado en la llave foránea relacional idApunte.
+        return this.idApunte;
+        // Cerramos la lectura pública del ID del apunte.
+    }
+
+    // Definimos un método público que devuelve el identificador numérico de la tabla de usuarios.
+    public int obtenerIdUsuario() {
+        // Retornamos el valor entero protegido en la llave foránea idUsuario.
+        return this.idUsuario;
+        // Cerramos la lectura pública del ID del usuario.
+    }
+
+    // Definimos un método público para extraer el valor matemático de la calificación para inyectarlo en operaciones SQL.
+    public int obtenerEstrellas() {
+        // Retornamos el atributo privado estrellas para permitir futuros cálculos de promedios ponderados.
+        return this.estrellas;
+        // Cerramos la lectura pública de la calificación otorgada.
+    }
+
+    // Definimos un método público que retorna la crítica textual enviada por el estudiante.
+    public String obtenerComentario() {
+        // Retornamos la cadena de texto encapsulada celosamente en la variable comentario.
+        return this.comentario;
+        // Cerramos la lectura pública del texto de la reseña.
+    }
+
+    // Definimos un método público que traduce el objeto fecha complejo a una cadena de caracteres cruda.
+    public String obtenerFechaRegistroComoTexto() {
+        // Transformamos el tipo LocalDate a un String puro invocando toString() para no corromper la base relacional SQLite.
+        return this.fechaRegistro.toString();
+        // Cerramos el bloque de conversión de la fecha hacia formato texto.
+    }
+
+// Cerramos de forma absoluta la declaración estructural de la clase Resena.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: SembradorDatos.java
+=========================================================================
+// Declaramos la pertenencia innegociable al paquete raíz de tu proyecto universitario.
+package bo.edu.nur;
+
+// Importamos la interfaz nativa de Spring Boot que nos permite ejecutar código justo después de encender el servidor Tomcat.
+import org.springframework.boot.CommandLineRunner;
+// Importamos la anotación Component para que el radar de Spring detecte e instancie esta clase automáticamente.
+import org.springframework.stereotype.Component;
+// Importamos las herramientas de conexión JDBC de Java para manipular SQLite directamente.
+import java.sql.Connection;
+import java.sql.Statement;
+
+// Inyectamos la directiva Component. Sin esto, la clase sería un bloque de texto inútil e ignorado por el compilador.
+@Component
+// Declaramos la clase pública implementando la interfaz estructurada de ejecución en línea de comandos.
+public class SembradorDatos implements CommandLineRunner {
+
+    // Sobrescribimos el método obligatorio 'run', el cual encapsula toda la lógica de inicialización autónoma.
+    @Override
+    public void run(String... args) throws Exception {
+
+        // Imprimimos un aviso en la consola de IntelliJ para auditar el inicio del proceso de siembra.
+        System.out.println("====== INICIANDO PROTOCOLO DE SIEMBRA DE DATOS ======");
+        System.out.println("1. Verificando la infraestructura física de SQLite...");
+
+        // FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS (Solución al error SQLITE_ERROR)
+        // Abrimos un bloque try-with-resources para conectar con la base de datos y asegurar el cierre automático del túnel.
+        // FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS
+        // FASE 1: RECONSTRUCCIÓN MASIVA DE LA BASE DE DATOS (V2)
+        try (Connection conexion = ConexionDB.conectar();
+             Statement declaracion = conexion.createStatement()) {
+
+            // 1. Tabla Usuario Expandida (Añadimos carrera y calificación)
+            declaracion.execute("CREATE TABLE IF NOT EXISTS Usuario (" +
+                    "id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "nombre_usuario TEXT UNIQUE, " +
+                    "nombre_completo TEXT, " +
+                    "numero_credencial TEXT, " +
+                    "contrasena TEXT, " +
+                    "carrera_estudiante TEXT, " + // NUEVA COLUMNA: Para el algoritmo de recomendación
+                    "calificacion_autor REAL DEFAULT 0.0, " + // NUEVA COLUMNA: Promedio de reputación
+                    "creditos_virtuales INTEGER DEFAULT 0, " +
+                    "racha_diaria INTEGER DEFAULT 0, " +
+                    "fecha_ultimo_acceso TEXT)");
+
+            // 2. Tabla Apunte Expandida (Añadimos las métricas sociales)
+            declaracion.execute("CREATE TABLE IF NOT EXISTS Apunte (" +
+                    "id_apunte INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "titulo TEXT, " +
+                    "categoria_materia TEXT, " +
+                    "id_autor INTEGER, " +
+                    "ruta_archivo_fisico TEXT, " +
+                    "conteo_vistas INTEGER DEFAULT 0, " + // NUEVA COLUMNA
+                    "conteo_descargas INTEGER DEFAULT 0, " + // NUEVA COLUMNA
+                    "conteo_likes INTEGER DEFAULT 0, " + // NUEVA COLUMNA
+                    "conteo_dislikes INTEGER DEFAULT 0, " + // NUEVA COLUMNA
+                    "FOREIGN KEY(id_autor) REFERENCES Usuario(id_usuario))");
+
+            // 3. NUEVA TABLA: Historial de Visitas (Para las recomendaciones y recientes)
+            declaracion.execute("CREATE TABLE IF NOT EXISTS Historial_Visitas (" +
+                    "id_visita INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "id_usuario INTEGER, " +
+                    "id_apunte INTEGER, " +
+                    "fecha_visita DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), " +
+                    "FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))");
+
+            // 4. NUEVA TABLA: Biblioteca de Adquiridos (Para que no paguen dos veces)
+            declaracion.execute("CREATE TABLE IF NOT EXISTS Biblioteca_Adquiridos (" +
+                    "id_adquisicion INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    "id_usuario INTEGER, " +
+                    "id_apunte INTEGER, " +
+                    "fecha_compra DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), " +
+                    "FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))");
+
+            System.out.println("-> Infraestructura de Base de Datos V2 validada correctamente.");
+
+        } catch (Exception e) {
+            System.out.println("Error crítico al reconstruir las tablas: " + e.getMessage());
+        }
+        // FASE 2: INYECCIÓN DE USUARIOS Y CRIPTOGRAFÍA
+        System.out.println("2. Buscando perfiles de prueba...");
+
+        // Utilizamos el DAO para preguntar si tu perfil de desarrollador ya existe en la tabla recién creada.
+        if (UsuarioDAO.obtenerIdPorAlias("lucca_dev") == -1) {
+
+            // CRIPTOGRAFÍA: Encriptamos la contraseña de prueba usando el algoritmo adaptativo jBCrypt con su respectivo 'salt'.
+            String claveLucca = org.mindrot.jbcrypt.BCrypt.hashpw("password123", org.mindrot.jbcrypt.BCrypt.gensalt());
+
+            // Instanciamos el modelo matemático del estudiante inyectando el hash seguro en lugar de texto plano.
+            Usuario estudiante1 = new Usuario("lucca_dev", "Lucca Ortiz", "REG-2026", claveLucca);
+
+            // Ordenamos al DAO que escriba esta fila en el archivo .db.
+            UsuarioDAO.registrarUsuario(estudiante1);
+
+            // Recuperamos el ID numérico autogenerado por SQLite para poder manipular la economía.
+            int idLucca = UsuarioDAO.obtenerIdPorAlias("lucca_dev");
+            // Le otorgamos un capital semilla de 50 créditos para facilitar las pruebas de descargas.
+            UsuarioDAO.sumarCreditos(idLucca, 50);
+
+            // Avisamos en la consola que el primer perfil fue creado con éxito.
+            System.out.println("-> Estudiante 'lucca_dev' inyectado automáticamente con 50 créditos (Hash asegurado).");
+            // Cerramos la condición del primer estudiante.
+        }
+
+        // Repetimos la lógica de validación para un segundo usuario de prueba.
+        if (UsuarioDAO.obtenerIdPorAlias("estudiante_pro") == -1) {
+
+            // Hasheamos una contraseña distinta para este segundo perfil.
+            String clavePro = org.mindrot.jbcrypt.BCrypt.hashpw("qwerty", org.mindrot.jbcrypt.BCrypt.gensalt());
+
+            // Empaquetamos al segundo estudiante.
+            Usuario estudiante2 = new Usuario("estudiante_pro", "Carlos Tester", "REG-9999", clavePro);
+
+            // Guardamos el registro en la persistencia local.
+            UsuarioDAO.registrarUsuario(estudiante2);
+
+            // Avisamos de la creación exitosa.
+            System.out.println("-> Estudiante 'estudiante_pro' inyectado automáticamente (Hash asegurado).");
+            // Cerramos la condición del segundo estudiante.
+        }
+
+        // Finalizamos el reporte de la consola indicando que el servidor web puede comenzar a recibir tráfico humano.
+        System.out.println("====== SIEMBRA FINALIZADA: SERVIDOR LISTO ======");
+
+        // Cerramos el método run() de ejecución autónoma.
+    }
+
+// Cerramos la arquitectura general de la clase SembradorDatos.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: Usuario.java
+=========================================================================
+// Declaramos el paquete estructural del proyecto.
+package bo.edu.nur;
+
+// Importamos la librería nativa para generar estampas de tiempo.
+import java.time.LocalDate;
+
+// Declaramos la clase pública que servirá de molde para la memoria RAM.
+public class Usuario {
+
+    // ========================================================================================
+    // ATRIBUTOS DE LA ENTIDAD
+    // ========================================================================================
+
+    // Llave primaria numérica auto-generada por SQLite.
+    private int idUsuario;
+    // Identificador textual único del estudiante.
+    private String nombreUsuario;
+    // Nombre legal y completo del estudiante.
+    private String nombreCompleto;
+    // Número de matrícula universitaria.
+    private String numeroCredencial;
+    // Hash criptográfico de seguridad.
+    private String contrasena;
+    // Saldo de la economía virtual.
+    private int creditosVirtuales;
+    // Contador de ingresos diarios.
+    private int rachaDiaria;
+    // Estampa de tiempo del último acceso.
+    private String fechaUltimoAcceso;
+
+    // ========================================================================================
+    // CONSTRUCTORES
+    // ========================================================================================
+
+    // Constructor de Extracción: Utilizado por el DAO cuando lee una fila completa de SQLite.
+    public Usuario(int idUsuario, String nombreUsuario, String nombreCompleto, String numeroCredencial, String contrasena, int creditosVirtuales, int rachaDiaria, String fechaUltimoAcceso) {
+        // Mapeamos el ID.
+        this.idUsuario = idUsuario;
+        // Mapeamos el alias.
+        this.nombreUsuario = nombreUsuario;
+        // Mapeamos el nombre real.
+        this.nombreCompleto = nombreCompleto;
+        // Mapeamos la credencial.
+        this.numeroCredencial = numeroCredencial;
+        // Mapeamos la clave encriptada.
+        this.contrasena = contrasena;
+        // Mapeamos los créditos.
+        this.creditosVirtuales = creditosVirtuales;
+        // Mapeamos la racha.
+        this.rachaDiaria = rachaDiaria;
+        // Mapeamos la fecha.
+        this.fechaUltimoAcceso = fechaUltimoAcceso;
+        // Cerramos el constructor de extracción.
+    }
+
+    // Constructor de Inserción: Utilizado por el ControladorRegistro al crear un nuevo estudiante.
+    public Usuario(String nombreUsuario, String nombreCompleto, String numeroCredencial, String contrasena) {
+        // Asignamos un ID temporal en 0.
+        this.idUsuario = 0;
+        // Asignamos alias digitado.
+        this.nombreUsuario = nombreUsuario;
+        // Asignamos nombre real digitado.
+        this.nombreCompleto = nombreCompleto;
+        // Asignamos credencial validada.
+        this.numeroCredencial = numeroCredencial;
+        // Asignamos clave cifrada.
+        this.contrasena = contrasena;
+        // Inicializamos saldo en 0.
+        this.creditosVirtuales = 0;
+        // Inicializamos racha en 0.
+        this.rachaDiaria = 0;
+        // Inyectamos la fecha actual como texto.
+        this.fechaUltimoAcceso = LocalDate.now().toString();
+        // Cerramos el constructor de inserción.
+    }
+
+    // ========================================================================================
+    // MÉTODOS PUENTE PARA THYMELEAF Y CONTROLADORES MODERNOS
+    // ========================================================================================
+
+    // Extraemos la llave primaria (Requerido por ControladorPerfil).
+    public int getIdUsuario() {
+        // Retornamos el ID.
+        return this.idUsuario;
+        // Cerramos el getter.
+    }
+
+    // Extraemos el alias (Requerido por Thymeleaf y ControladorDashboard).
+    public String getAlias() {
+        // Retornamos el nombre de usuario.
+        return this.nombreUsuario;
+        // Cerramos el getter.
+    }
+
+    // Extraemos el saldo (Requerido por Thymeleaf y ControladorDashboard).
+    public int getCreditos() {
+        // Retornamos los créditos virtuales.
+        return this.creditosVirtuales;
+        // Cerramos el getter.
+    }
+
+    // ========================================================================================
+    // MÉTODOS HEREDADOS (Compatibilidad estricta con UsuarioDAO antiguo)
+    // ========================================================================================
+
+    // Retornamos el alias con la nomenclatura antigua para no romper inserciones previas.
+    public String obtenerNombreUsuario() {
+        // Devolvemos el dato.
+        return this.nombreUsuario;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el nombre completo.
+    public String obtenerNombreCompleto() {
+        // Devolvemos el dato.
+        return this.nombreCompleto;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos la credencial institucional.
+    public String obtenerNumeroCredencial() {
+        // Devolvemos el dato.
+        return this.numeroCredencial;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el hash criptográfico.
+    public String obtenerContrasena() {
+        // Devolvemos el dato.
+        return this.contrasena;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos el saldo con la nomenclatura antigua.
+    public int obtenerCreditos() {
+        // Devolvemos el dato.
+        return this.creditosVirtuales;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos la racha diaria.
+    public int obtenerRachaDiaria() {
+        // Devolvemos el dato.
+        return this.rachaDiaria;
+        // Cerramos el getter antiguo.
+    }
+
+    // Retornamos la estampa de tiempo como texto.
+    public String obtenerFechaUltimoAccesoComoTexto() {
+        // Devolvemos el dato.
+        return this.fechaUltimoAcceso;
+        // Cerramos el getter antiguo.
+    }
+
+// Cerramos la estructura absoluta de la clase Usuario.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: UsuarioDAO.java
+=========================================================================
+// Declaramos la pertenencia estricta de la clase al paquete de nuestro proyecto universitario.
+package bo.edu.nur;
+
+// Importamos la interfaz nativa para manejar la conexión abierta con SQLite.
+import java.sql.Connection;
+// Importamos PreparedStatement para precompilar las consultas y blindarnos contra inyecciones SQL.
+import java.sql.PreparedStatement;
+// Importamos ResultSet para navegar por las tablas virtuales que devuelve la base de datos.
+import java.sql.ResultSet;
+// Importamos SQLException para atrapar los fallos de lectura y escritura en el disco duro.
+import java.sql.SQLException;
+
+// Declaramos la clase pública que actuará como el único intermediario entre Java y la tabla Usuario de SQLite.
+public class UsuarioDAO {
+
+    // ========================================================================================
+    // MÉTODO 1: REGISTRO DE NUEVOS ESTUDIANTES
+    // ========================================================================================
+
+    // Método estático para insertar un estudiante nuevo en la base de datos.
+    public static boolean registrarUsuario(Usuario nuevoUsuario) {
+        // Redactamos la instrucción SQL inyectando datos en todas las columnas definidas.
+        String sql = "INSERT INTO Usuario (nombre_usuario, nombre_completo, numero_credencial, contrasena, creditos_virtuales, racha_diaria, fecha_ultimo_acceso) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        // Abrimos el túnel blindado hacia el archivo de SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la sentencia en el motor.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el alias.
+            declaracion.setString(1, nuevoUsuario.getAlias());
+            // Inyectamos el nombre real.
+            declaracion.setString(2, nuevoUsuario.obtenerNombreCompleto());
+            // Inyectamos la matrícula institucional.
+            declaracion.setString(3, nuevoUsuario.obtenerNumeroCredencial());
+            // Inyectamos el hash criptográfico Bcrypt.
+            declaracion.setString(4, nuevoUsuario.obtenerContrasena());
+            // Inyectamos el capital semilla.
+            declaracion.setInt(5, nuevoUsuario.getCreditos());
+            // Inyectamos el contador de ingresos.
+            declaracion.setInt(6, nuevoUsuario.obtenerRachaDiaria());
+            // Inyectamos la estampa temporal inicial.
+            declaracion.setString(7, nuevoUsuario.obtenerFechaUltimoAccesoComoTexto());
+
+            // Ejecutamos la orden de inserción física.
+            declaracion.executeUpdate();
+            // Avisamos al programador del éxito de la transacción.
+            System.out.println("TELEMETRÍA DAO -> Estudiante registrado exitosamente.");
+            // Devolvemos verdadero a la capa de servicio.
+            return true;
+
+            // Atrapamos colisiones de I/O (ejemplo: alias ya registrado por otro usuario).
+        } catch (SQLException e) {
+            // Imprimimos la traza del error crítico.
+            System.out.println("ERROR DAO -> Fallo crítico al registrar: " + e.getMessage());
+            // Devolvemos falso para notificar el fracaso.
+            return false;
+            // Cerramos el bloque de contingencia.
+        }
+        // Cerramos el método de inserción.
+    }
+
+    // ========================================================================================
+    // MÉTODO 2: VALIDACIÓN DE ACCESO (LOGIN CRIPTOGRÁFICO)
+    // ========================================================================================
+
+    // Método estático que evalúa si un usuario tiene permiso de entrar al sistema.
+    public static boolean validarCredenciales(String alias, String claveCruda) {
+        // Buscamos exclusivamente el hash protegido basándonos en el alias ingresado.
+        String sql = "SELECT contrasena FROM Usuario WHERE nombre_usuario = ?";
+
+        // Abrimos la sesión con la base de datos.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la búsqueda.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el alias tecleado en el navegador.
+            declaracion.setString(1, alias);
+
+            // Ejecutamos la lectura del disco.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si la fila del estudiante existe en SQLite.
+                if (resultados.next()) {
+                    // Extraemos la cadena de 60 caracteres que conforma el hash guardado.
+                    String hashGuardado = resultados.getString("contrasena");
+                    // Ejecutamos la matemática inversa de jBCrypt para verificar la coincidencia.
+                    return org.mindrot.jbcrypt.BCrypt.checkpw(claveCruda, hashGuardado);
+                    // Cerramos el bloque de evaluación de fila.
+                }
+                // Anulamos la memoria del lector de resultados.
+            }
+            // Atrapamos fallos estructurales de SQL.
+        } catch (SQLException e) {
+            // Informamos de la vulnerabilidad en consola.
+            System.out.println("ERROR DAO -> Falla en la validación criptográfica: " + e.getMessage());
+            // Cerramos el bloque protector.
+        }
+        // Retornamos falso automáticamente si el proceso falla o si las claves no coinciden.
+        return false;
+        // Cerramos el validador de seguridad.
+    }
+
+    // ========================================================================================
+    // MÉTODO 3: TRADUCTOR DE IDENTIDAD (ALIAS -> ID)
+    // ========================================================================================
+
+    // Método estático para descubrir la llave primaria de un usuario conociendo solo su nombre.
+    public static int obtenerIdPorAlias(String alias) {
+        // Instruimos a SQLite a retornar únicamente el número de la columna id_usuario.
+        String sql = "SELECT id_usuario FROM Usuario WHERE nombre_usuario = ?";
+
+        // Conectamos a la base de forma efímera.
+        try (Connection conexion = ConexionDB.conectar();
+             // Aseguramos la instrucción.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el alias a traducir.
+            declaracion.setString(1, alias);
+
+            // Llevamos a cabo la extracción.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si detectamos al usuario.
+                if (resultados.next()) {
+                    // Entregamos la llave primaria en formato entero primitivo.
+                    return resultados.getInt("id_usuario");
+                    // Cerramos el condicional de impacto.
+                }
+                // Liberamos recursos de lectura.
+            }
+            // Capturamos violaciones de lectura.
+        } catch (SQLException e) {
+            // Documentamos el fallo.
+            System.out.println("ERROR DAO -> Falla al traducir ID por Alias: " + e.getMessage());
+            // Cerramos la captura.
+        }
+        // Si el usuario no existe, retornamos un número negativo y absurdo para alertar al sistema.
+        return -1;
+        // Cerramos el método traductor.
+    }
+
+    // ========================================================================================
+    // MÉTODO 4: OBTENER PERFIL COMPLETO (EL MÉTODO CORREGIDO)
+    // ========================================================================================
+
+    // Método estático que mapea absolutamente todos los datos de un estudiante de SQLite a Java.
+    public static Usuario obtenerPorAlias(String aliasBusqueda) {
+        // Solicitamos toda la fila que pertenezca al nombre de usuario indicado.
+        String sql = "SELECT * FROM Usuario WHERE nombre_usuario = ?";
+
+        // Iniciamos la transacción de lectura.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos para neutralizar ataques.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos el alias provisto por el controlador.
+            declaracion.setString(1, aliasBusqueda);
+
+            // Ejecutamos el barrido del disco.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Si la consulta arroja una fila válida.
+                if (resultados.next()) {
+                    // Instanciamos el objeto orquestador con el constructor de 8 parámetros.
+                    return new Usuario(
+                            // Mapeo 1: Identificador absoluto.
+                            resultados.getInt("id_usuario"),
+                            // Mapeo 2: Alias de la cuenta.
+                            resultados.getString("nombre_usuario"),
+                            // Mapeo 3: Nombre legal.
+                            resultados.getString("nombre_completo"),
+                            // Mapeo 4: Matrícula universitaria.
+                            resultados.getString("numero_credencial"),
+                            // Mapeo 5: Clave cifrada.
+                            resultados.getString("contrasena"),
+                            // Mapeo 6: Saldo de créditos.
+                            resultados.getInt("creditos_virtuales"),
+                            // Mapeo 7: Racha consecutiva.
+                            resultados.getInt("racha_diaria"),
+                            // Mapeo 8: Fecha de última visita.
+                            resultados.getString("fecha_ultimo_acceso")
+                    );
+                    // Cerramos el proceso de mapeo objeto-relacional.
+                }
+                // Cerramos el cursor temporal.
+            }
+            // Atrapamos caídas de hardware o bloqueos lógicos.
+        } catch (SQLException e) {
+            // Imprimimos el diagnóstico de la lectura completa.
+            System.out.println("ERROR DAO -> Fallo al extraer el perfil absoluto: " + e.getMessage());
+            // Cerramos el control de excepciones.
+        }
+        // Retornamos ausencia de memoria si el estudiante no reside en la base de datos.
+        return null;
+        // Cerramos el buscador exhaustivo de perfiles.
+    }
+
+    // ========================================================================================
+    // MÉTODO 5: INYECCIÓN DE RECOMPENSAS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático que aplica un incremento matemático a la billetera.
+    public static void sumarCreditos(int idUsuario, int cantidad) {
+        // Redactamos una instrucción UPDATE para que el motor de SQL haga la matemática nativamente.
+        String sql = "UPDATE Usuario SET creditos_virtuales = creditos_virtuales + ? WHERE id_usuario = ?";
+
+        // Abrimos la sesión financiera.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos el inyector.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el bono a acreditar.
+            declaracion.setInt(1, cantidad);
+            // Inyectamos al beneficiario.
+            declaracion.setInt(2, idUsuario);
+            // Ejecutamos la orden de alteración física.
+            declaracion.executeUpdate();
+
+            // Atrapamos violaciones de concurrencia.
+        } catch (SQLException e) {
+            // Registramos el error de inyección de capital.
+            System.out.println("ERROR DAO -> Imposible inyectar créditos: " + e.getMessage());
+            // Cerramos la captura.
+        }
+        // Cerramos el dispensador de recompensas.
+    }
+
+    // ========================================================================================
+    // MÉTODO 6: AUDITORÍA DE FONDOS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático que lee el capital del estudiante.
+    public static int consultarSaldo(int idUsuario) {
+        // Seleccionamos estrictamente el número que representa el dinero virtual.
+        String sql = "SELECT creditos_virtuales FROM Usuario WHERE id_usuario = ?";
+
+        // Iniciamos la conexión con SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la petición.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos la llave primaria del estudiante.
+            declaracion.setInt(1, idUsuario);
+
+            // Efectuamos la lectura.
+            try (ResultSet resultados = declaracion.executeQuery()) {
+                // Evaluamos si el estudiante existe.
+                if (resultados.next()) {
+                    // Devolvemos el saldo actual.
+                    return resultados.getInt("creditos_virtuales");
+                    // Cerramos condición.
+                }
+                // Vaciamos lector de memoria.
+            }
+            // Atrapamos bloqueos físicos.
+        } catch (SQLException e) {
+            // Notificamos problema de acceso al saldo.
+            System.out.println("ERROR DAO -> Fallo al auditar los fondos: " + e.getMessage());
+            // Cerramos el control.
+        }
+        // Retornamos saldo cero como mecanismo de seguridad ante la duda.
+        return 0;
+        // Cerramos el auditor financiero.
+    }
+
+    // ========================================================================================
+    // MÉTODO 7: COBRO POR DESCARGAS (ECONOMÍA)
+    // ========================================================================================
+
+    // Método estático para debitar fondos tras una transacción exitosa en la tienda.
+    public static void cobrarCreditos(int idUsuario, int cantidadACobrar) {
+        // Alteramos la columna restando el costo estipulado.
+        String sql = "UPDATE Usuario SET creditos_virtuales = creditos_virtuales - ? WHERE id_usuario = ?";
+
+        // Abrimos la sesión transaccional.
+        try (Connection conexion = ConexionDB.conectar();
+             // Configuramos el inyector.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Asignamos el descuento numérico.
+            declaracion.setInt(1, cantidadACobrar);
+            // Asignamos la víctima del débito.
+            declaracion.setInt(2, idUsuario);
+            // Ejecutamos la orden de extracción financiera.
+            declaracion.executeUpdate();
+
+            // Atrapamos fallas de bloqueo I/O.
+        } catch (SQLException e) {
+            // Señalamos el fallo de deducción en la terminal.
+            System.out.println("ERROR DAO -> Falla al debitar los créditos: " + e.getMessage());
+            // Cerramos captura de errores.
+        }
+        // Cerramos la función de cobro.
+    }
+    // ========================================================================================
+    // MÉTODOS DE DESTRUCCIÓN Y LIMPIEZA (ZONA DE PELIGRO)
+    // ========================================================================================
+
+    // Declaramos el método público y estático para aniquilar a un usuario específico mediante su llave primaria.
+    public static boolean eliminarUsuarioPorId(int idUsuario) {
+
+        // Redactamos la instrucción SQL DML ordenando el borrado de la fila que coincida estrictamente con el ID.
+        String sql = "DELETE FROM Usuario WHERE id_usuario = ?";
+
+        // Abrimos el túnel de conexión transaccional con la base de datos local SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Precompilamos la sentencia destructiva para bloquear cualquier intento de inyección de código.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Inyectamos el número de identificación del estudiante en el comodín de la sentencia.
+            declaracion.setInt(1, idUsuario);
+
+            // Ejecutamos la orden de aniquilación en el disco duro y capturamos la cantidad de filas afectadas.
+            int filasBorradas = declaracion.executeUpdate();
+
+            // Imprimimos en la consola de diagnóstico la confirmación de la limpieza por motivos de auditoría.
+            System.out.println("AUDITORÍA DAO -> Se ordenó la eliminación del usuario ID: " + idUsuario);
+
+            // Retornamos verdadero si el motor relacional confirmó la destrucción de al menos un registro (filasBorradas > 0).
+            return filasBorradas > 0;
+
+            // Capturamos cualquier bloqueo físico o error estructural emitido por el archivo .db.
+        } catch (SQLException e) {
+
+            // Imprimimos la traza del error crítico en la terminal para evaluar por qué falló la eliminación.
+            System.out.println("ERROR DAO -> Fallo masivo al intentar eliminar el usuario: " + e.getMessage());
+
+            // Retornamos falso indicando al controlador que la operación de limpieza fracasó rotundamente.
+            return false;
+
+            // Cerramos el bloque de contingencia y protección.
+        }
+
+        // Cerramos la arquitectura del método destructor individual.
+    }
+
+    // Declaramos un método extremo para limpiar absolutamente todos los usuarios (Útil solo en fase de pruebas).
+    public static boolean limpiarTodosLosUsuarios() {
+
+        // Redactamos la instrucción de borrado masivo sin condicionales (Peligro: Borrará la tabla entera).
+        String sql = "DELETE FROM Usuario";
+
+        // Establecemos el conducto temporal hacia el archivo de SQLite.
+        try (Connection conexion = ConexionDB.conectar();
+             // Preparamos la orden de ejecución masiva.
+             PreparedStatement declaracion = conexion.prepareStatement(sql)) {
+
+            // Ejecutamos la orden sin inyectar parámetros, barriendo con todos los registros.
+            declaracion.executeUpdate();
+
+            // Emitimos una alerta roja en la consola notificando la purga total del sistema.
+            System.out.println("ALERTA DAO -> La tabla Usuario ha sido purgada por completo.");
+
+            // Retornamos éxito absoluto en la transacción.
+            return true;
+
+            // Atrapamos colisiones de disco.
+        } catch (SQLException e) {
+
+            // Documentamos el colapso del intento de purga.
+            System.out.println("ERROR DAO -> Falla al intentar vaciar la tabla de usuarios: " + e.getMessage());
+
+            // Retornamos fracaso transaccional.
+            return false;
+
+            // Cerramos la captura de errores.
+        }
+
+        // Cerramos el método de purga global.
+    }
+
+// Cerramos de manera concluyente la arquitectura de la clase UsuarioDAO.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ValidadorApunte.java
+=========================================================================
+// Declaramos el paquete estructural del proyecto.
+package bo.edu.nur;
+
+// Importamos la interfaz MultipartFile para extraer metadatos del binario antes de escribirlo.
+import org.springframework.web.multipart.MultipartFile;
+
+// Declaramos la clase que actúa como portero (Gatekeeper) de la integridad del repositorio.
+public class ValidadorApunte {
+
+    // Definimos el peso mínimo (ej: 50 KB). Un archivo menor es, casi con certeza, basura o un error de subida.
+    private static final long TAMANO_MINIMO = 50 * 1024;
+    // Definimos el peso máximo (ej: 15 MB). Evitamos que saturen tu HP Celeron con archivos gigantes.
+    private static final long TAMANO_MAXIMO = 15 * 1024 * 1024;
+
+    // Método maestro que evalúa si el archivo tiene calidad académica mínima para entrar al sistema.
+    public static boolean esArchivoValido(MultipartFile archivo) {
+
+        // 1. VALIDACIÓN DE PRESENCIA: Si el archivo es nulo o está vacío, abortamos inmediatamente.
+        if (archivo == null || archivo.isEmpty()) {
+            return false;
+        }
+
+        // 2. VALIDACIÓN DE TAMAÑO: Comprobamos si el peso está en el rango académico aceptable.
+        long tamano = archivo.getSize();
+        if (tamano < TAMANO_MINIMO || tamano > TAMANO_MAXIMO) {
+            // Registramos el intento fallido en la terminal de diagnóstico.
+            System.out.println("GATEKEEPER -> Archivo rechazado por tamaño: " + tamano + " bytes.");
+            return false;
+        }
+
+        // 3. VALIDACIÓN DE EXTENSIÓN: Comprobamos si el formato es compatible con la academia.
+        String nombreOriginal = archivo.getOriginalFilename();
+        if (nombreOriginal == null ||
+                (!nombreOriginal.toLowerCase().endsWith(".pdf") && !nombreOriginal.toLowerCase().endsWith(".md"))) {
+            System.out.println("GATEKEEPER -> Archivo rechazado por formato inválido: " + nombreOriginal);
+            return false;
+        }
+
+        // 4. VALIDACIÓN DE TIPO MIME: Verificamos el tipo de contenido real que detecta Spring Boot.
+        String contentType = archivo.getContentType();
+        if (contentType == null ||
+                (!contentType.equals("application/pdf") && !contentType.contains("text/markdown"))) {
+            return false;
+        }
+
+        // Si sobrevive a todos los filtros, el archivo es apto para la base de datos.
+        return true;
+    }
+
+// Cerramos la arquitectura inquebrantable de la clase ValidadorApunte.
+}
+
+
+
+=========================================================================
+CONTEO DE CLASE: ValidadorIdentidad.java
+=========================================================================
+// Declaramos el paquete estructural que encapsula la lógica de nuestra plataforma universitaria.
+package bo.edu.nur;
+
+// Importamos la clase Pattern, que es el motor compilador de expresiones regulares en Java.
+import java.util.regex.Pattern;
+// Importamos la clase Matcher, que es el ejecutor que coteja el texto contra el patrón compilado.
+import java.util.regex.Matcher;
+
+// Declaramos la clase pública que actúa como la aduana de identidad del sistema.
+public class ValidadorIdentidad {
+
+    // Definimos el patrón criptográfico inmutable.
+    // Explicación del Regex:
+    // ^          -> Indica el inicio estricto de la cadena.
+    // [a-zA-Z0-9._%+-]+ -> Permite cualquier combinación alfanumérica típica de un usuario antes del arroba.
+    // @nur\\.edu\\.bo   -> Fuerza a que el dominio sea exactamente "@nur.edu.bo" (escapando los puntos).
+    // $          -> Indica el final estricto de la cadena, evitando que pongan texto extra al final.
+    private static final String REGEX_DOMINIO_OFICIAL = "^[a-zA-Z0-9._%+-]+@nur\\.edu\\.bo$";
+
+    // Compilamos el patrón en memoria una sola vez como constante estática para no saturar tu HP Celeron en cada registro.
+    private static final Pattern PATRON_CORREO = Pattern.compile(REGEX_DOMINIO_OFICIAL);
+
+    // Declaramos el método público y estático que juzgará la legitimidad del estudiante.
+    public static boolean esEstudianteLegitimo(String correoIngresado) {
+
+        // Primera barrera defensiva: verificamos si el dato es nulo o una cadena vacía.
+        if (correoIngresado == null || correoIngresado.trim().isEmpty()) {
+            // Retornamos falso inmediatamente bloqueando intentos de inyección nula.
+            return false;
+            // Cerramos la validación de nulidad.
+        }
+
+        // Instanciamos el evaluador pasándole el texto que escribió el usuario en el formulario.
+        Matcher evaluador = PATRON_CORREO.matcher(correoIngresado);
+
+        // El método matches() retorna true SÓLO si la cadena completa encaja perfectamente en el dominio NUR.
+        return evaluador.matches();
+
+        // Cerramos el método validador de identidad.
+    }
+
+// Cerramos la arquitectura estricta de la clase.
+}
+
+
+
