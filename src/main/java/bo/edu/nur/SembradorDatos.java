@@ -1,130 +1,143 @@
-// Declaramos la pertenencia innegociable al paquete raíz de tu proyecto universitario.
+// Declaramos el paquete estructural que organiza nuestras clases de persistencia.
 package bo.edu.nur;
 
-// Importamos la interfaz nativa de Spring Boot que nos permite ejecutar código justo después de encender el servidor Tomcat.
+// Importamos la interfaz de Spring Boot para ejecutar lógica inmediatamente después de iniciar Tomcat.
 import org.springframework.boot.CommandLineRunner;
-// Importamos la anotación Component para que el radar de Spring detecte e instancie esta clase automáticamente.
+// Importamos la anotación Component para registrar esta clase en el contenedor de Spring.
 import org.springframework.stereotype.Component;
-// Importamos las herramientas de conexión JDBC de Java para manipular SQLite directamente.
+// Importamos el gestor de conexiones SQL nativo de Java.
 import java.sql.Connection;
+// Importamos la interfaz Statement para enviar instrucciones DDL crudas a SQLite.
 import java.sql.Statement;
 
-// Inyectamos la directiva Component. Sin esto, la clase sería un bloque de texto inútil e ignorado por el compilador.
+// Inyectamos el decorador para que Spring Boot instancie este componente de forma automática.
 @Component
-// Declaramos la clase pública implementando la interfaz estructurada de ejecución en línea de comandos.
+// Declaramos la clase que sembrará la infraestructura inicial de datos en el disco.
 public class SembradorDatos implements CommandLineRunner {
 
-    // Sobrescribimos el método obligatorio 'run', el cual encapsula toda la lógica de inicialización autónoma.
+    // Sobrescribimos el método obligatorio run que se ejecuta al encender la aplicación.
     @Override
     public void run(String... args) throws Exception {
 
-        // Imprimimos un aviso en la consola de IntelliJ para auditar el inicio del proceso de siembra.
+        // Imprimimos un encabezado decorativo de auditoría en la terminal de IntelliJ.
         System.out.println("====== INICIANDO PROTOCOLO DE SIEMBRA DE DATOS ======");
+        // Notificamos el inicio de la verificación física del archivo de base de datos.
         System.out.println("1. Verificando la infraestructura física de SQLite...");
 
-        // FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS (Solución al error SQLITE_ERROR)
-        // Abrimos un bloque try-with-resources para conectar con la base de datos y asegurar el cierre automático del túnel.
-        // FASE 1: RECONSTRUCCIÓN DE LA BASE DE DATOS
-        // FASE 1: RECONSTRUCCIÓN MASIVA DE LA BASE DE DATOS (V2)
+        // Abrimos un bloque de recursos seguros para conectar y dialogar con SQLite de forma transitoria.
         try (Connection conexion = ConexionDB.conectar();
+             // Instanciamos el objeto de transporte para nuestras sentencias estructuradas SQL.
              Statement declaracion = conexion.createStatement()) {
 
-            // 1. Tabla Usuario Expandida (Añadimos carrera y calificación)
+            // Ejecutamos el DDL maestro para asegurar la existencia de la tabla Usuario con el esquema correcto.
             declaracion.execute("CREATE TABLE IF NOT EXISTS Usuario (" +
+                    // Definimos la llave primaria entera autoincremental delegada al motor.
                     "id_usuario INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    // Definimos el alias único que identificará las credenciales del estudiante.
                     "nombre_usuario TEXT UNIQUE, " +
+                    // Almacenamos el nombre civil completo del alumno registrado.
                     "nombre_completo TEXT, " +
+                    // Guardamos la matrícula de seis dígitos previamente auditada en el validador.
                     "numero_credencial TEXT, " +
+                    // Almacenamos la cadena cifrada con el algoritmo hash de jBCrypt.
                     "contrasena TEXT, " +
-                    "carrera_estudiante TEXT, " + // NUEVA COLUMNA: Para el algoritmo de recomendación
-                    "calificacion_autor REAL DEFAULT 0.0, " + // NUEVA COLUMNA: Promedio de reputación
+                    // Añadimos soporte para la carrera del estudiante pensando en futuras expansiones.
+                    "carrera_estudiante TEXT, " +
+                    // Añadimos el promedio flotante de reputación para el sistema de gamificación.
+                    "calificacion_autor REAL DEFAULT 0.0, " +
+                    // Establecemos la columna de créditos financieros virtuales con un valor base cero.
                     "creditos_virtuales INTEGER DEFAULT 0, " +
+                    // Registramos la racha consecutiva de ingresos del estudiante al portal.
                     "racha_diaria INTEGER DEFAULT 0, " +
+                    // Almacenamos la estampa de tiempo textual de su última actividad en el sistema.
                     "fecha_ultimo_acceso TEXT)");
 
-            // 2. Tabla Apunte Expandida (Añadimos las métricas sociales)
+            // Ejecutamos el DDL para dar vida a la tabla Apunte encargada del catálogo de documentos.
             declaracion.execute("CREATE TABLE IF NOT EXISTS Apunte (" +
+                    // Llave primaria auto-incrementable propia de cada archivo subido.
                     "id_apunte INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    // Nombre comercial asignado al documento por el creador en el modal.
                     "titulo TEXT, " +
+                    // Taxonomía o materia académica asociada al apunte para los filtros SPA.
                     "categoria_materia TEXT, " +
+                    // Llave foránea entera que vincula directamente el archivo con su creador.
                     "id_autor INTEGER, " +
+                    // Ubicación física segura combinada con el identificador UUID único.
                     "ruta_archivo_fisico TEXT, " +
-                    "conteo_vistas INTEGER DEFAULT 0, " + // NUEVA COLUMNA
-                    "conteo_descargas INTEGER DEFAULT 0, " + // NUEVA COLUMNA
-                    "conteo_likes INTEGER DEFAULT 0, " + // NUEVA COLUMNA
-                    "conteo_dislikes INTEGER DEFAULT 0, " + // NUEVA COLUMNA
-                    "FOREIGN KEY(id_autor) REFERENCES Usuario(id_usuario))");
+                    // Contador de lecturas visuales acumuladas por el apunte en el servidor.
+                    "conteo_vistas INTEGER DEFAULT 0, " +
+                    // Contador de descargas comerciales exitosas procesadas en la red.
+                    "conteo_descargas INTEGER DEFAULT 0, " +
+                    // Contador de interacciones positivas otorgadas por los alumnos de la NUR.
+                    "conteo_likes INTEGER DEFAULT 0, " +
+                    // Contador de interacciones negativas registradas en las auditorías de calidad.
+                    "conteo_dislikes INTEGER DEFAULT 0, " +
+                    // Forzamos el vínculo relacional destruyendo los apuntes en cascada si el autor es eliminado.
+                    "FOREIGN KEY(id_autor) REFERENCES Usuario(id_usuario) ON DELETE CASCADE)");
 
-            // 3. NUEVA TABLA: Historial de Visitas (Para las recomendaciones y recientes)
-            declaracion.execute("CREATE TABLE IF NOT EXISTS Historial_Visitas (" +
-                    "id_visita INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            // BUG FIX: Sincronizamos el nombre de la tabla puente a 'Adquisicion' para encajar con ApunteDAO.
+            declaracion.execute("CREATE TABLE IF NOT EXISTS Adquisicion (" +
+                    // Llave foránea del estudiante que desembolsa sus créditos virtuales.
                     "id_usuario INTEGER, " +
+                    // Llave foránea del documento digital cuyo derecho perpetuo ha comprado.
                     "id_apunte INTEGER, " +
-                    "fecha_visita DATETIME DEFAULT CURRENT_TIMESTAMP, " +
-                    "FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), " +
-                    "FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))");
-
-            // 4. NUEVA TABLA: Biblioteca de Adquiridos (Para que no paguen dos veces)
-            declaracion.execute("CREATE TABLE IF NOT EXISTS Biblioteca_Adquiridos (" +
-                    "id_adquisicion INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                    "id_usuario INTEGER, " +
-                    "id_apunte INTEGER, " +
+                    // Registramos de forma nativa el instante cronológico exacto del intercambio comercial.
                     "fecha_compra DATETIME DEFAULT CURRENT_TIMESTAMP, " +
-                    "FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario), " +
-                    "FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte))");
+                    // Establecemos una clave primaria compuesta para impedir duplicidad de recibos de compra en disco.
+                    "PRIMARY KEY (id_usuario, id_apunte), " +
+                    // Enlazamos jerárquicamente al comprador aplicando borrado masivo en cascada.
+                    "FOREIGN KEY(id_usuario) REFERENCES Usuario(id_usuario) ON DELETE CASCADE, " +
+                    // Enlazamos jerárquicamente al apunte aplicando borrado masivo en cascada.
+                    "FOREIGN KEY(id_apunte) REFERENCES Apunte(id_apunte) ON DELETE CASCADE)");
 
+            // Imprimimos la validación en consola confirmando la alineación de la infraestructura.
             System.out.println("-> Infraestructura de Base de Datos V2 validada correctamente.");
 
+            // Atrapamos cualquier anomalía de I/O o bloqueo relacional del archivo de SQLite.
         } catch (Exception e) {
+            // Imprimimos el diagnóstico exacto del colapso en la terminal de IntelliJ.
             System.out.println("Error crítico al reconstruir las tablas: " + e.getMessage());
+            // Cerramos el bloque protector.
         }
-        // FASE 2: INYECCIÓN DE USUARIOS Y CRIPTOGRAFÍA
+
+        // Notificamos el inicio de la evaluación y siembra de perfiles de prueba de alto rendimiento.
         System.out.println("2. Buscando perfiles de prueba...");
 
-        // Utilizamos el DAO para preguntar si tu perfil de desarrollador ya existe en la tabla recién creada.
+        // Interrogamos al DAO si el perfil del administrador principal ya reside en la base de datos.
         if (UsuarioDAO.obtenerIdPorAlias("lucca_dev") == -1) {
 
-            // CRIPTOGRAFÍA: Encriptamos la contraseña de prueba usando el algoritmo adaptativo jBCrypt con su respectivo 'salt'.
+            // Encriptamos la clave base usando la matemática adaptativa de jBCrypt con factor de costo predeterminado.
             String claveLucca = org.mindrot.jbcrypt.BCrypt.hashpw("password123", org.mindrot.jbcrypt.BCrypt.gensalt());
-
-            // Instanciamos el modelo matemático del estudiante inyectando el hash seguro en lugar de texto plano.
+            // Instanciamos el modelo del estudiante inyectando el hash criptográfico resultante.
             Usuario estudiante1 = new Usuario("lucca_dev", "Lucca Ortiz", "REG-2026", claveLucca);
-
-            // Ordenamos al DAO que escriba esta fila en el archivo .db.
+            // Ordenamos al DAO que guarde físicamente la fila en la tabla de SQLite.
             UsuarioDAO.registrarUsuario(estudiante1);
-
-            // Recuperamos el ID numérico autogenerado por SQLite para poder manipular la economía.
+            // Rescatamos el ID numérico real autogenerado por el motor relacional.
             int idLucca = UsuarioDAO.obtenerIdPorAlias("lucca_dev");
-            // Le otorgamos un capital semilla de 50 créditos para facilitar las pruebas de descargas.
+            // Le inyectamos un capital de 50 créditos virtuales para facilitar los testeos del mercado.
             UsuarioDAO.sumarCreditos(idLucca, 50);
-
-            // Avisamos en la consola que el primer perfil fue creado con éxito.
+            // Imprimimos el éxito del procedimiento de siembra autoral.
             System.out.println("-> Estudiante 'lucca_dev' inyectado automáticamente con 50 créditos (Hash asegurado).");
-            // Cerramos la condición del primer estudiante.
+            // Cerramos la condición defensiva.
         }
 
-        // Repetimos la lógica de validación para un segundo usuario de prueba.
+        // Interrogamos si el segundo perfil de pruebas ya se encuentra registrado en el disco duro.
         if (UsuarioDAO.obtenerIdPorAlias("estudiante_pro") == -1) {
 
-            // Hasheamos una contraseña distinta para este segundo perfil.
+            // Ciframos de forma independiente la contraseña de este perfil simulado.
             String clavePro = org.mindrot.jbcrypt.BCrypt.hashpw("qwerty", org.mindrot.jbcrypt.BCrypt.gensalt());
-
-            // Empaquetamos al segundo estudiante.
+            // Empaquetamos al segundo alumno con sus datos ficticios estructurados.
             Usuario estudiante2 = new Usuario("estudiante_pro", "Carlos Tester", "REG-9999", clavePro);
-
-            // Guardamos el registro en la persistencia local.
+            // Registramos la información de forma permanente en la persistencia local.
             UsuarioDAO.registrarUsuario(estudiante2);
-
-            // Avisamos de la creación exitosa.
+            // Notificamos la inyección exitosa de la contraparte relacional.
             System.out.println("-> Estudiante 'estudiante_pro' inyectado automáticamente (Hash asegurado).");
-            // Cerramos la condición del segundo estudiante.
+            // Cerramos la condición del segundo usuario.
         }
 
-        // Finalizamos el reporte de la consola indicando que el servidor web puede comenzar a recibir tráfico humano.
+        // Marcamos formalmente la conclusión de la inicialización de datos en consola.
         System.out.println("====== SIEMBRA FINALIZADA: SERVIDOR LISTO ======");
-
-        // Cerramos el método run() de ejecución autónoma.
+        // Cerramos el método maestro de CommandLineRunner.
     }
-
-// Cerramos la arquitectura general de la clase SembradorDatos.
+// Cerramos la clase encargada de la siembra estructural.
 }

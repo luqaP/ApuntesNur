@@ -78,8 +78,8 @@ public class ControladorDashboard {
         // Inyectamos la colección de élite para el "Salón de la Fama".
         modelo.addAttribute("rankingEstudiantes", rankingTop3);
 
-        // Ordenamos al servidor ensamblar el 'Dashboard.html' y dispararlo por la red.
-        return "Dashboard";
+        // Ordenamos al servidor ensamblar el 'dashboard.html' y dispararlo por la red.
+        return "dashboard";
 
         // Cerramos el método orquestador.
     }

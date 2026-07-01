@@ -1,77 +1,76 @@
-// Declaramos el paquete oficial de la universidad NUR para mantener la cohesión estricta del proyecto.
+// Declaramos el paquete estructural oficial del proyecto universitario para mantener la cohesión.
 package bo.edu.nur;
 
-// Declaramos la clase MotorEconomia que centraliza absolutamente todas las reglas financieras del sistema.
+// Declaramos la clase MotorEconomia que centraliza las reglas financieras del ecosystema.
 public class MotorEconomia {
 
-    // Definimos el costo estándar e inmutable para desbloquear cualquier documento en la plataforma.
+    // Definimos el costo estándar de créditos para desbloquear un apunte en el mercado.
     public static final int COSTO_DESCARGA = 5;
-    // Definimos la recompensa estática que recibe un estudiante por aportar material nuevo al repositorio.
+    // Definimos la recompensa estática otorgada al estudiante que sube material real al servidor.
     public static final int RECOMPENSA_SUBIDA = 10;
-    // Definimos el incentivo económico para fomentar que los alumnos califiquen y depuren los apuntes.
+    // Definimos el incentivo económico para fomentar la depuración de textos académicos.
     public static final int RECOMPENSA_RESENA = 2;
-    // Definimos el capital semilla o bono inicial para inyectar en SQLite y evitar que los nuevos se frustren.
+    // Definimos el capital de bienvenida inyectado a los nuevos alumnos de la NUR.
     public static final int BONO_BIENVENIDA = 50;
 
-    // Declaramos un método estático y rápido para validar matemáticamente si un saldo es suficiente.
+    // Declaramos un método estático rápido para evaluar la solvencia de una billetera virtual.
     public static boolean puedeDescargar(int saldoActual) {
-        // Retornamos el resultado de la evaluación lógica comparando el dinero del usuario con el costo estricto.
+        // Evaluamos booleanamente si el dinero líquido supera o iguala la barrera de cobro comercial.
         return saldoActual >= COSTO_DESCARGA;
-        // Cerramos el método de validación algorítmica simple.
+        // Cerramos la validación algorítmica simple.
     }
 
-    // Declaramos el método orquestador para procesar una compra segura y atómica entre dos estudiantes.
+    // Declaramos el método centralizado para procesar transacciones seguras y atómicas entre cuentas.
     public static boolean procesarAdquisicionSegura(int idComprador, int idApunte) {
-        // Invocamos al DAO para extraer la metadata del documento exacto desde la base de datos de SQLite.
+        // Consultamos al DAO para extraer la metadata del documento físico usando su ID de base de datos.
         Apunte apunteObjetivo = ApunteDAO.obtenerPorId(idApunte);
 
-        // Verificamos de forma defensiva si el documento es nulo (fue borrado físicamente o no existe).
+        // Verificamos si el archivo no existe en el registro relacional para abortar la operación.
         if (apunteObjetivo == null) {
-            // Abortamos la transacción inmediatamente retornando falso para proteger la integridad.
+            // Retornamos falso cancelando cualquier movimiento de fondos ficticios.
             return false;
-            // Cerramos la barrera de validación de existencia.
+            // Cerramos el escudo de existencia.
         }
 
-        // Verificamos lógicamente si el estudiante está intentando comprar su propio archivo Markdown o PDF.
+        // Impedimos lógicamente que un estudiante intente comprar su propia propiedad intelectual.
         if (apunteObjetivo.getIdAutor() == idComprador) {
-            // Bloqueamos la auto-compra porque el "farmeo" de descargas destruye la economía circular del sistema.
-            return false;
-            // Cerramos la validación de propiedad intelectual original.
+            // Retornamos verdadero de forma inmediata permitiendo la descarga libre de sus propios archivos.
+            return true;
+            // Cerramos la validación de autoría original.
         }
 
-        // Consultamos a la biblioteca transaccional si el usuario ya pagó por este apunte en el pasado.
+        // Consultamos al libro mayor si el alumno ya pagó por los derechos de este documento en el pasado.
         boolean yaComprado = ApunteDAO.verificarAdquisicion(idComprador, idApunte);
 
-        // Evaluamos el resultado booleano de la consulta de pertenencia en disco.
+        // Evaluamos el resultado booleano devuelto por el cursor de SQLite.
         if (yaComprado) {
-            // Retornamos verdadero de inmediato para que descargue gratis, pues ya posee los derechos perpetuos.
+            // Retornamos verdadero de forma inmediata habilitando la descarga gratuita por derecho de propiedad.
             return true;
-            // Cerramos el bloque de validación de compras duplicadas.
+            // Cerramos la cláusula de derechos adquiridos.
         }
 
-        // Averiguamos cuánto dinero digital tiene exactamente el comprador en su bóveda consultando SQLite.
+        // Solicitamos a la base de datos el saldo real de la billetera del comprador actual.
         int saldoComprador = UsuarioDAO.consultarSaldo(idComprador);
 
-        // Invocamos la regla de negocio para comprobar si sus fondos superan o igualan la barrera de peaje.
+        // Evaluamos si el estudiante no tiene la liquidez necesaria para costear la descarga.
         if (!puedeDescargar(saldoComprador)) {
-            // Rechazamos la petición de compra por insolvencia económica del estudiante.
+            // Rechazamos la transacción por insolvencia financiera del alumno.
             return false;
-            // Cerramos la muralla de validación de fondos líquidos.
+            // Cerramos la barrera de liquidez.
         }
 
-        // Fase 1 de la Transacción: Le sustraemos el importe de los créditos al estudiante comprador.
-        UsuarioDAO.sumarCreditos(idComprador, COSTO_DESCARGA);
+        // BUG FIX: Cambiamos 'sumarCreditos' por 'cobrarCreditos' para restar el dinero al comprador de forma real.
+        UsuarioDAO.cobrarCreditos(idComprador, COSTO_DESCARGA);
 
-        // Fase 2 de la Transacción: Le transferimos esa misma cantidad matemática al creador del documento.
+        // Transferimos íntegramente los 5 créditos ganados a la cuenta del autor original del apunte.
         UsuarioDAO.sumarCreditos(apunteObjetivo.getIdAutor(), COSTO_DESCARGA);
 
-        // Fase 3 de la Transacción: Registramos legalmente la compra en la tabla intermedia y aumentamos la fama del archivo.
+        // Registramos legalmente el recibo de compra inyectando la fila en la tabla puente Adquisicion.
         ApunteDAO.registrarAdquisicion(idComprador, idApunte);
 
-        // Concluimos retornando verdadero, garantizando que toda la operación atómica fue un éxito rotundo.
+        // Concluimos la transacción atómica devolviendo un estado de éxito absoluto.
         return true;
-        // Cerramos el método maestro de orquestación transaccional.
+        // Cerramos el método de orquestación transaccional financiera.
     }
-
-// Cerramos la arquitectura inquebrantable de la clase MotorEconomia.
+// Cerramos la arquitectura de la clase del motor económico.
 }

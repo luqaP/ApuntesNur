@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil Público - Apuntes NUR</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; margin: 0; color: #1e293b; }
+        .cabecera-perfil { background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; padding: 60px 20px; text-align: center; }
+        .avatar-gigante { width: 120px; height: 120px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); margin-top: -60px; background-color: white; }
+        .contenedor-info { max-width: 800px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 30px; margin-top: -40px; position: relative; text-align: center; }
+        .contenedor-info h1 { margin: 10px 0 5px 0; font-size: 28px; }
+        .etiqueta-carrera { display: inline-block; background-color: #e0f2fe; color: #1d4ed8; padding: 5px 15px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
+        .estadisticas { display: flex; justify-content: center; gap: 40px; border-top: 1px solid #f1f5f9; padding-top: 20px; margin-top: 20px; }
+        .stat-item { text-align: center; }
+        .stat-valor { font-size: 24px; font-weight: bold; color: #0f172a; }
+        .stat-label { font-size: 13px; color: #64748b; }
+
+        .contenedor-apuntes { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .contenedor-apuntes h2 { margin-bottom: 20px; color: #0f172a; }
+
+        /* Reutilizamos el estilo de las filas del dashboard */
+        .lista-apuntes { display: flex; flex-direction: column; gap: 15px; }
+        .fila-apunte { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .info-apunte { display: flex; align-items: center; gap: 20px; flex: 1; }
+        .contenedor-miniatura { width: 60px; height: 80px; border-radius: 6px; overflow: hidden; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; border: 1px solid #e2e8f0;}
+        .miniatura-pdf { width: 100%; height: 100%; object-fit: cover; }
+        .texto-apunte h4 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; }
+        .texto-apunte p { margin: 0; font-size: 13px; color: #64748b; }
+        .btn-volver { position: absolute; top: 20px; left: 20px; color: white; text-decoration: none; font-weight: bold; background: rgba(0,0,0,0.3); padding: 8px 15px; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+<div class="cabecera-perfil">
+    <a href="/dashboard" class="btn-volver">← Volver al Dashboard</a>
+</div>
+
+<div class="contenedor-info">
+    <img th:src="@{'https://ui-avatars.com/api/?name=' + ${perfil.alias} + '&size=256&background=random&color=fff'}" class="avatar-gigante" alt="Avatar">
+    <h1 th:text="${perfil.alias}">Usuario</h1>
+    <div class="etiqueta-carrera">Miembro Verificado NUR</div>
+
+    <div class="estadisticas">
+        <div class="stat-item">
+            <div class="stat-valor" th:text="${listaApuntes.size()}">0</div>
+            <div class="stat-label">Documentos</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-valor" th:text="${perfil.creditos}">0</div>
+            <div class="stat-label">Créditos Creados</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-valor" th:text="${calificacion} + ' ⭐'">0.0</div>
+            <div class="stat-label">Reputación</div>
+        </div>
+    </div>
+</div>
+
+<div class="contenedor-apuntes">
+    <h2 th:text="'Biblioteca Pública de ' + ${perfil.alias}">Repositorio</h2>
+
+    <div th:if="${listaApuntes.isEmpty()}" style="text-align: center; padding: 40px; background: white; border-radius: 12px; color: #64748b;">
+        Este usuario aún no ha contribuido con apuntes a la red.
+    </div>
+
+    <div class="lista-apuntes">
+        <article class="fila-apunte" th:each="apunte : ${listaApuntes}">
+            <div class="info-apunte">
+                <div class="contenedor-miniatura">
+                    <img th:src="@{'/previews/' + ${apunte.rutaArchivoFisico} + '.jpg'}" onerror="this.style.display='none';" class="miniatura-pdf">
+                </div>
+                <div class="texto-apunte">
+                    <h4 th:text="${apunte.titulo}">Título</h4>
+                    <p th:text="${apunte.categoria}">Categoría</p>
+                </div>
+            </div>
+            <a th:href="@{/descargar-apunte(idApunte=${apunte.idApunte})}" style="padding: 10px 20px; background-color: #10b981; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Descargar</a>
+        </article>
+    </div>
+</div>
+
+</body>
+</html>

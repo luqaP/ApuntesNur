@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Apuntes NUR</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; color: #1e293b; display: flex; height: 100vh; overflow: hidden; }
+
+        .sidebar-izquierda { width: 260px; background-color: #ffffff; border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; z-index: 10; }
+        .contenedor-logo { text-align: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+        .logo-nur { max-width: 160px; height: auto; }
+        .logo-texto { font-size: 22px; font-weight: 900; color: #1e3a8a; letter-spacing: -0.5px; }
+
+        .menu-navegacion { display: flex; flex-direction: column; gap: 5px; }
+        .boton-menu { background: transparent; border: none; padding: 15px 20px; border-radius: 8px; text-align: left; font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 10px; }
+        .boton-menu:hover { background-color: #f8fafc; color: #0f172a; }
+        .boton-menu.activo { background-color: #eff6ff; color: #1d4ed8; }
+        .boton-subida { border: 1px dashed #10b981; color: #10b981; margin-top: 10px; margin-bottom: 10px; }
+        .boton-subida:hover { background-color: #d1fae5; border-style: solid; }
+
+        .area-central { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .cabecera-saludo { padding: 40px 40px 20px 40px; text-align: center; }
+        .cabecera-saludo h1 { font-size: 36px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
+        .cabecera-saludo p { font-size: 16px; color: #64748b; }
+
+        .contenido-interno { padding: 0 40px 40px 40px; max-width: 1000px; margin: 0 auto; width: 100%; }
+        .titulo-seccion { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 20px; margin-top: 30px; }
+
+        /* PUNTO 9: REDISEÑO DE CATEGORÍAS */
+        .grid-materias-moderno { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .tarjeta-materia { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .tarjeta-materia:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-color: #3b82f6; }
+        .icono-materia { font-size: 30px; margin-bottom: 10px; }
+        .tarjeta-materia h3 { font-size: 15px; font-weight: 700; color: #0f172a; }
+        .tarjeta-materia.activa { border: 2px solid #3b82f6; background-color: #eff6ff; }
+
+        .lista-apuntes { display: flex; flex-direction: column; gap: 15px; }
+        .fila-apunte { background: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: 0.2s; }
+        .fila-apunte:hover { border-color: #cbd5e1; background-color: #f8fafc; }
+        .info-apunte { display: flex; align-items: center; gap: 20px; flex: 1; }
+
+        .contenedor-miniatura { width: 80px; height: 100px; border-radius: 6px; overflow: hidden; border: 1px solid #e2e8f0; flex-shrink: 0; background-color: #f1f5f9; display: flex; justify-content: center; align-items: center; }
+        .miniatura-pdf { width: 100%; height: 100%; object-fit: cover; }
+        .error-miniatura { font-size: 10px; color: #94a3b8; text-align: center; padding: 5px; }
+
+        .texto-apunte { display: flex; flex-direction: column; gap: 5px; }
+        .texto-apunte h4 { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 2px; }
+
+        /* PUNTO 7: Enlaces de Perfil integrados correctamente */
+        .autor-info { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #64748b; }
+        .micro-avatar { width: 20px; height: 20px; border-radius: 50%; }
+        .enlace-perfil { color: #1d4ed8; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .enlace-perfil:hover { text-decoration: underline; color: #1e40af; }
+
+        .btn-descargar-fila { padding: 10px 20px; background-color: #10b981; color: white; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 600; transition: 0.2s; white-space: nowrap; }
+        .btn-descargar-fila:hover { background-color: #059669; }
+
+        .sidebar-derecha { width: 320px; background-color: #ffffff; border-left: 1px solid #e2e8f0; padding: 30px 20px; overflow-y: auto; flex-shrink: 0; z-index: 10; }
+        .perfil-top { display: flex; align-items: center; justify-content: flex-end; gap: 15px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #f1f5f9; }
+        .billetera-badge { background: #fef08a; color: #854d0e; padding: 6px 12px; border-radius: 20px; font-weight: 700; font-size: 14px; border: 1px solid #fde047; }
+        .avatar-actual { width: 40px; height: 40px; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+        .tarjeta-ranking { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .medalla { width: 35px; height: 35px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; font-weight: bold; flex-shrink: 0; }
+        .texto-ranking h5 { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .texto-ranking p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+        /* PUNTO 8: Panel de Novedades mejorado visualmente */
+        .tarjeta-notificacion { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border-radius: 10px; padding: 20px; margin-top: 30px; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2); }
+        .tarjeta-notificacion h4 { font-size: 16px; margin-bottom: 10px; font-weight: bold; display: flex; align-items: center; gap: 8px; }
+        .tarjeta-notificacion p { font-size: 13px; opacity: 0.9; line-height: 1.5; margin-bottom: 15px; }
+        .etiqueta-destacada { background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(15, 23, 42, 0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-contenido { background: #ffffff; width: 90%; max-width: 500px; border-radius: 12px; padding: 30px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); animation: deslizarArriba 0.3s ease-out; position: relative; }
+        @keyframes deslizarArriba { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-contenido h2 { color: #0f172a; margin-bottom: 20px; font-size: 24px; font-weight: 800; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
+        .grupo-input { margin-bottom: 20px; display: flex; flex-direction: column; }
+        .grupo-input label { font-size: 14px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        .grupo-input input[type="text"], .grupo-input select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; }
+        .grupo-input input[type="file"] { padding: 10px; background-color: #f1f5f9; border: 1px dashed #94a3b8; border-radius: 8px; cursor: pointer; }
+        .botones-modal { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; }
+        .btn-cancelar { padding: 10px 20px; border-radius: 6px; background-color: #e2e8f0; font-weight: 600; border: none; cursor: pointer; }
+        .btn-confirmar { padding: 10px 20px; border-radius: 6px; background-color: #2563eb; color: white; font-weight: 600; border: none; cursor: pointer; }
+
+        .seccion-oculta { display: none !important; }
+
+        /* PUNTO 2: CORRECCIÓN ABSOLUTA PARA MÓVILES */
+        @media (max-width: 1024px) { .sidebar-derecha { display: none; } }
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar-izquierda { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; padding: 15px; z-index: 20; position: sticky; top: 0; }
+            .contenedor-logo { margin-bottom: 10px; padding-bottom: 10px; display: flex; justify-content: center; }
+            .logo-nur { max-width: 120px; }
+            .menu-navegacion { flex-direction: row; overflow-x: auto; padding-bottom: 5px; gap: 10px; }
+            .boton-menu { white-space: nowrap; padding: 10px 15px; font-size: 14px; }
+            .area-central { overflow: visible; }
+            .cabecera-saludo { padding: 20px 15px 10px 15px; }
+            .cabecera-saludo h1 { font-size: 24px; }
+            .contenido-interno { padding: 0 15px 30px 15px; }
+            .grid-materias-moderno { grid-template-columns: repeat(2, 1fr); }
+            .fila-apunte { flex-direction: column; align-items: flex-start; gap: 15px; padding: 15px; }
+            .info-apunte { flex-direction: column; align-items: center; text-align: center; width: 100%; }
+            .btn-descargar-fila { width: 100%; text-align: center; }
+            .autor-info { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar-izquierda">
+    <div class="contenedor-logo">
+        <img src="/img/logo_nur.png" alt="Universidad NUR" class="logo-nur" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <span class="logo-texto" style="display:none;">ApuntesNUR</span>
+    </div>
+    <nav class="menu-navegacion">
+        <button class="boton-menu activo" onclick="navegarSPA('seccion-inicio', this)">🏠 Inicio</button>
+        <button class="boton-menu" onclick="navegarSPA('seccion-biblioteca', this)">📚 Mi Biblioteca</button>
+        <button class="boton-menu boton-subida" onclick="abrirModal()">📤 Subir Contenido</button>
+        <a th:href="@{/perfil/{alias}(alias=${alias})}" class="boton-menu" style="text-decoration: none;">👤 Mi Perfil</a>
+        <a href="/" class="boton-menu" style="text-decoration: none; color: #ef4444;">🚪 Salir</a>
+    </nav>
+</aside>
+
+<main class="area-central">
+    <header class="cabecera-saludo">
+        <h1 th:text="'¡Hola, ' + ${alias} + '!'">¡Hola, Estudiante!</h1>
+        <p>Tu ecosistema de aprendizaje conectado.</p>
+    </header>
+
+    <div class="contenido-interno">
+
+        <div id="seccion-inicio">
+            <h2 class="titulo-seccion">Explorar Categorías</h2>
+
+            <div class="grid-materias-moderno">
+                <div class="tarjeta-materia activa" onclick="filtrarMateria('Todas', this)">
+                    <span class="icono-materia">📚</span>
+                    <h3>Ver Todo</h3>
+                </div>
+                <div class="tarjeta-materia" onclick="filtrarMateria('Programacion', this)">
+                    <span class="icono-materia">💻</span>
+                    <h3>Programación</h3>
+                </div>
+                <div class="tarjeta-materia" onclick="filtrarMateria('Algebra', this)">
+                    <span class="icono-materia">🧮</span>
+                    <h3>Álgebra</h3>
+                </div>
+                <div class="tarjeta-materia" onclick="filtrarMateria('Administracion', this)">
+                    <span class="icono-materia">📊</span>
+                    <h3>Administración</h3>
+                </div>
+            </div>
+
+            <h2 class="titulo-seccion">Últimos Apuntes Subidos</h2>
+            <div class="lista-apuntes">
+                <article class="fila-apunte apunte-global" th:each="apunte : ${listaApuntes}" th:data-materia="${apunte.categoria}">
+                    <div class="info-apunte">
+                        <div class="contenedor-miniatura">
+                            <img th:src="@{'/previews/' + ${apunte.rutaArchivoFisico} + '.jpg'}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="miniatura-pdf">
+                            <span class="error-miniatura" style="display:none;">Generando<br>Portada...</span>
+                        </div>
+                        <div class="texto-apunte">
+                            <h4 th:text="${apunte.titulo}">Resumen</h4>
+                            <div class="autor-info">
+                                <img th:src="@{'https://ui-avatars.com/api/?name=' + ${apunte.aliasAutor} + '&background=random&color=fff'}" class="micro-avatar">
+                                <span>Por <a class="enlace-perfil" th:href="@{/perfil/{autor}(autor=${apunte.aliasAutor})}" th:text="${apunte.aliasAutor}">Autor</a> • <span th:text="${apunte.categoria}">Cat</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <a th:href="@{/descargar-apunte(idApunte=${apunte.idApunte})}" class="btn-descargar-fila">Descargar (-5 🪙)</a>
+                </article>
+            </div>
+        </div>
+
+        <div id="seccion-biblioteca" class="seccion-oculta">
+            <h2 class="titulo-seccion">Bóveda Personal</h2>
+            <div th:if="${misApuntes.isEmpty()}" style="text-align: center; padding: 40px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1; color: #64748b;">
+                Aún no posees documentos adquiridos.
+            </div>
+            <div class="lista-apuntes">
+                <article class="fila-apunte" th:each="miApunte : ${misApuntes}">
+                    <div class="info-apunte">
+                        <div class="contenedor-miniatura">
+                            <img th:src="@{'/previews/' + ${miApunte.rutaArchivoFisico} + '.jpg'}" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" class="miniatura-pdf">
+                            <span class="error-miniatura" style="display:none;">Generando<br>Portada...</span>
+                        </div>
+                        <div class="texto-apunte">
+                            <h4 th:text="${miApunte.titulo}">Archivo Local</h4>
+                            <div class="autor-info">
+                                <img th:src="@{'https://ui-avatars.com/api/?name=' + ${alias} + '&background=random&color=fff'}" class="micro-avatar">
+                                <span><a class="enlace-perfil" th:href="@{/perfil/{autor}(autor=${alias})}" th:text="${alias}">Tú</a> • <span th:text="${miApunte.categoria}">Cat</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <a th:href="@{/descargar-apunte(idApunte=${miApunte.idApunte})}" class="btn-descargar-fila" style="background-color: #64748b;">Descargar (Gratis)</a>
+                </article>
+            </div>
+        </div>
+    </div>
+</main>
+
+<aside class="sidebar-derecha">
+    <div class="perfil-top">
+        <div class="billetera-badge" th:text="'🪙 ' + ${creditos}">🪙 0</div>
+        <a th:href="@{/perfil/{alias}(alias=${alias})}">
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${alias} + '&background=0f172a&color=fff'}" class="avatar-actual" style="cursor: pointer;">
+        </a>
+    </div>
+
+    <h3 style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 20px;">🏆 Top Contribuidores</h3>
+    <div class="lista-ranking">
+        <div class="tarjeta-ranking" th:each="lider, iterStat : ${rankingEstudiantes}">
+            <div class="medalla" th:text="'#' + ${iterStat.count}">#1</div>
+            <img th:src="@{'https://ui-avatars.com/api/?name=' + ${lider.alias} + '&background=random&color=fff'}" class="micro-avatar" style="width: 30px; height: 30px;">
+            <div class="texto-ranking">
+                <h5><a class="enlace-perfil" th:href="@{/perfil/{autor}(autor=${lider.alias})}" th:text="${lider.alias}" style="color: inherit;">Top</a></h5>
+                <p th:text="${lider.creditos} + ' Créditos'">1000</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="tarjeta-notificacion">
+        <h4>📈 Pulso de la NUR</h4>
+        <p>La categoría de <span class="etiqueta-destacada">Programación</span> ha recibido 12 apuntes nuevos esta semana.</p>
+        <p><strong>Tip:</strong> Sube apuntes de asignaturas de primeros semestres para farmear créditos más rápido.</p>
+    </div>
+</aside>
+
+<div id="modal-subida" class="modal-overlay">
+    <div class="modal-contenido">
+        <h2>Subir Apunte Físico</h2>
+        <form action="/subir-apunte" method="POST" enctype="multipart/form-data">
+            <div class="grupo-input">
+                <label>Título Comercial:</label>
+                <input type="text" name="tituloApunte" required autocomplete="off">
+            </div>
+            <div class="grupo-input">
+                <label>Clasificación Académica:</label>
+                <select name="categoriaMateria" required>
+                    <option value="Programacion">Programación</option>
+                    <option value="Algebra">Álgebra Lineal</option>
+                    <option value="Administracion">Administración</option>
+                    <option value="Contabilidad">Contabilidad</option>
+                </select>
+            </div>
+            <div class="grupo-input">
+                <label>Archivo Binario (Solo PDF):</label>
+                <input type="file" name="archivoFisico" accept=".pdf" required>
+            </div>
+            <div class="botones-modal">
+                <button type="button" class="btn-cancelar" onclick="cerrarModal()">Abortar</button>
+                <button type="submit" class="btn-confirmar">📤 Transmitir al Servidor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function navegarSPA(idSeccionObjetivo, botonPresionado) {
+        document.getElementById('seccion-inicio').classList.add('seccion-oculta');
+        document.getElementById('seccion-biblioteca').classList.add('seccion-oculta');
+        document.getElementById(idSeccionObjetivo).classList.remove('seccion-oculta');
+        const botones = document.querySelectorAll('.boton-menu');
+        botones.forEach(btn => btn.classList.remove('activo'));
+        if(!botonPresionado.classList.contains('boton-subida')) {
+            botonPresionado.classList.add('activo');
+        }
+    }
+
+    function filtrarMateria(categoriaSeleccionada, tarjetaPresionada) {
+        const tarjetas = document.querySelectorAll('.tarjeta-materia');
+        tarjetas.forEach(t => t.classList.remove('activa'));
+        tarjetaPresionada.classList.add('activa');
+        const filasApuntes = document.querySelectorAll('.apunte-global');
+        filasApuntes.forEach(fila => {
+            if (categoriaSeleccionada === 'Todas' || fila.getAttribute('data-materia') === categoriaSeleccionada) {
+                fila.style.display = 'flex';
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+    }
+
+    function abrirModal() { document.getElementById('modal-subida').style.display = 'flex'; }
+    function cerrarModal() { document.getElementById('modal-subida').style.display = 'none'; }
+</script>
+</body>
+</html>

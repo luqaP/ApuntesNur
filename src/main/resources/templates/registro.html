@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro - Apuntes NUR</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .caja-registro { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #10b981; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .alerta-error { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; font-weight: bold; border: 1px solid #f87171; }
+    </style>
+</head>
+<body>
+<div class="caja-registro">
+    <h2 style="color: #0f172a;">Crear Cuenta NUR</h2>
+
+    <div th:if="${param.error != null}" class="alerta-error">
+        <span th:if="${param.error[0] == 'credencial_invalida'}">Tu credencial debe tener exactamente 6 dígitos numéricos.</span>
+        <span th:if="${param.error[0] == 'dominio_invalido_solo_nur'}">El correo debe pertenecer al dominio @nur.edu.bo.</span>
+        <span th:if="${param.error[0] == 'alias_duplicado'}">Ese nombre de usuario ya está ocupado por otro estudiante.</span>
+    </div>
+
+    <form action="/procesar-registro" method="POST">
+        <input type="text" name="aliasUsuario" placeholder="Nombre de usuario" required>
+        <input type="text" name="nombreCompleto" placeholder="Nombre completo" required>
+        <input type="email" name="correoInstitucional" placeholder="Correo (@nur.edu.bo)" required>
+        <input type="text" name="numeroCredencial" placeholder="Matrícula (6 dígitos)" required>
+        <input type="password" name="contrasena" placeholder="Contraseña" required>
+        <button type="submit">Registrarme</button>
+    </form>
+</div>
+</body>
+</html>

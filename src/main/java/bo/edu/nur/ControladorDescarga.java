@@ -1,93 +1,101 @@
-// Declaramos el paquete estructural de la universidad NUR.
+// Definimos el paquete estructural del proyecto web de la universidad NUR.
 package bo.edu.nur;
 
-// Importamos todas las herramientas necesarias para la gestión de peticiones web, binarios y redirecciones.
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.stereotype.Controller;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.HttpStatus;
+// Importamos la utilidad para ajustar archivos locales en recursos manejables por Spring Boot.
+import org.springframework.core.io.FileSystemResource;
+// Importamos la interfaz genérica de recursos para transmisiones masivas de flujos de datos.
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+// Importamos las cabeceras estándar HTTP para configurar las directivas de descarga del navegador.
+import org.springframework.http.HttpHeaders;
+// Importamos la definición de medios de red para declarar la transferencia de binarios puros.
+import org.springframework.http.MediaType;
+// Importamos la entidad de control de respuestas para manejar códigos de estado de internet.
+import org.springframework.http.ResponseEntity;
+// Importamos el estereotipo Controller para añadir este archivo al radar MVC del framework.
+import org.springframework.stereotype.Controller;
+// Importamos el interceptor de peticiones de red mediante el protocolo HTTP GET.
+import org.springframework.web.bind.annotation.GetMapping;
+// Importamos el extractor de parámetros obligatorios inyectados desde la URL web.
+import org.springframework.web.bind.annotation.RequestParam;
+// Importamos el gestor de sesiones de Jakarta para validar identidades en la memoria RAM.
 import jakarta.servlet.http.HttpSession;
+// Importamos el componente nativo de manipulación e inspección de archivos en disco duro.
+import java.io.File;
 
-// Inyectamos la directiva Controller para que Spring Boot registre esta clase en el ecosistema.
+// Registramos el componente en el kernel central de Spring para que asuma su rol transaccional.
 @Controller
-// Declaramos la clase pública que administra el egreso de datos y las transacciones de descarga.
+// Declaramos la clase pública que servirá de peaje para las descargas de documentos de la universidad.
 public class ControladorDescarga {
 
-    // Escuchamos peticiones GET dirigidas a la ruta de descarga.
+    // Escuchamos de forma asíncrona cualquier petición dirigida al endpoint "/descargar-apunte".
     @GetMapping("/descargar-apunte")
-    // Declaramos el método maestro que devuelve un binario o ejecuta una redirección de seguridad.
-    public ResponseEntity<?> procesarDescarga(@RequestParam("idApunte") int idApunte, HttpSession sesion) {
+    // Declaramos el método maestro exigiendo el ID del apunte en formato entero y el acceso a la sesión HTTP.
+    public ResponseEntity<Resource> descargarApunte(@RequestParam("idApunte") int idApunte, HttpSession sesion) {
 
-        // 1. VALIDACIÓN DE IDENTIDAD Y SEGURIDAD PERIMETRAL
-        // Extraemos el alias almacenado en la memoria temporal del servidor.
+        // Extraemos el alias almacenado de forma temporal en la sesión del servidor tras el login.
         String aliasUsuario = (String) sesion.getAttribute("usuarioLogueado");
 
-        // Evaluamos si el estudiante intentó acceder a una descarga sin haber iniciado sesión.
+        // Evaluamos perimetralmente si un usuario anónimo intenta vulnerar la ruta web de descargas.
         if (aliasUsuario == null) {
-            // Retornamos un estado HTTP 302 (FOUND) forzando al navegador a volver al índice principal.
-            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/").build();
-            // Cerramos el bloque de validación de seguridad.
+            // Bloqueamos la petición devolviendo un estado HTTP 401 que significa "No Autorizado".
+            return ResponseEntity.status(401).build();
+            // Cerramos el escudo defensivo de identidad.
         }
 
-        // Traducimos el alias a la llave primaria de SQLite.
+        // BUG FIX: Cambiamos el método erróneo por 'obtenerPorId' y reemplazamos la variable fantasma 'idAcorde' por 'idApunte'.
+        Apunte apunte = ApunteDAO.obtenerPorId(idApunte);
+
+        // Evaluamos de forma relacional si el ID solicitado no existe dentro de las tablas de SQLite.
+        if (apunte == null) {
+            // Retornamos un código HTTP 404 notificando que el documento no fue encontrado.
+            return ResponseEntity.notFound().build();
+            // Cerramos el control de integridad de datos.
+        }
+
+        // Consultamos el identificador numérico (ID) único perteneciente al alumno que hace clic en descargar.
         int idComprador = UsuarioDAO.obtenerIdPorAlias(aliasUsuario);
 
-        // 2. ORQUESTACIÓN DE LA LÓGICA DE NEGOCIO
-        // Delegamos la validación financiera (créditos y propiedad) al MotorEconomia.
-        boolean transaccionAprobada = MotorEconomia.procesarAdquisicionSegura(idComprador, idApunte);
-
-        // Evaluamos si el MotorEconomia rechazó la transacción por falta de fondos o fraude.
-        if (!transaccionAprobada) {
-            // Ejecutamos una redirección silenciosa al dashboard con un parámetro de error para notificar al usuario.
-            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=transaccion_rechazada").build();
-            // Cerramos el bloque de control financiero.
+        // Si la base de datos reporta un error de traducción de alias, abortamos por precaución.
+        if (idComprador == -1) {
+            // Devolvemos una respuesta de error estructural 404 al navegador de internet.
+            return ResponseEntity.notFound().build();
+            // Cerramos el control del comprador.
         }
 
-        // 3. RECUPERACIÓN Y ENTREGA DEL BINARIO
-        // Obtenemos la metadata del archivo desde el DAO.
-        Apunte documento = ApunteDAO.obtenerPorId(idApunte);
+        // REFACTORIZACIÓN MÁXIMA: Delegamos la validación financiera y comercial enteramente al MotorEconomia.
+        boolean transaccionValida = MotorEconomia.procesarAdquisicionSegura(idComprador, idApunte);
 
-        // CORRECCIÓN DE ALCANCE: Declaramos la variable 'recurso' fuera del bloque try para que sea visible en todo el método.
-        Resource recurso = null;
-
-        // Abrimos bloque de contingencia para la lectura física en el disco duro.
-        try {
-            // Construimos la ruta absoluta hacia la bóveda de archivos.
-            Path rutaArchivo = Paths.get("repositorio_nur/" + documento.getRutaArchivoFisico()).normalize();
-            // Inicializamos el recurso de red.
-            recurso = new UrlResource(rutaArchivo.toUri());
-
-            // Verificamos si el archivo existe y es legible por la JVM.
-            if (recurso.exists() && recurso.isReadable()) {
-
-                // Entregamos el binario forzando la descarga mediante la cabecera CONTENT_DISPOSITION.
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + recurso.getFilename() + "\"")
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                        .body(recurso);
-
-                // Si el archivo falta en el disco físico.
-            } else {
-                // Redirigimos al dashboard informando la pérdida del documento.
-                return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=archivo_perdido").build();
-                // Cerramos la validación de integridad física.
-            }
-
-            // Capturamos cualquier excepción de sistema operativo o de red.
-        } catch (Exception e) {
-            // Redirigimos en caso de catástrofe interna del servidor.
-            return ResponseEntity.status(HttpStatus.FOUND).header(HttpHeaders.LOCATION, "/dashboard?error=fallo_servidor").build();
-            // Cerramos el bloque de manejo de excepciones.
+        // Evaluamos si el motor económico denegó el intercambio por falta de fondos o violaciones lógicas.
+        if (!transaccionValida) {
+            // Bloqueamos la descarga devolviendo un código HTTP 403 que representa "Acceso Prohibido".
+            return ResponseEntity.status(403).build();
+            // Cerramos el control del peaje transaccional.
         }
 
-        // Cerramos el método controlador.
+        // Reconstruimos la dirección exacta del binario físico uniendo la raíz y la nomenclatura blindada con UUID.
+        String rutaFisica = "repositorio_nur/" + apunte.getRutaArchivoFisico();
+        // Instanciamos el objeto File apuntando a los bloques físicos en el disco de almacenamiento local.
+        File archivo = new File(rutaFisica);
+
+        // Comprobamos si por algún fallo de hardware el archivo PDF desapareció físicamente del disco.
+        if (!archivo.exists()) {
+            // Respondemos con un estado HTTP 404 impidiendo lecturas de punteros vacíos en el sistema.
+            return ResponseEntity.notFound().build();
+            // Cerramos el control de persistencia en disco duro.
+        }
+
+        // Envolvemos el archivo binario dentro de la abstracción de recursos del framework Spring Boot.
+        Resource recurso = new FileSystemResource(archivo);
+
+        // Despachamos el recurso empaquetado hacia la red configurando una respuesta HTTP 200 de éxito.
+        return ResponseEntity.ok()
+                // Declaramos el tipo MIME como flujo binario puro para forzar la ventana de guardado en Windows/Android.
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                // Inyectamos la cabecera Content-Disposition adjuntando de forma limpia el nombre original del archivo PDF.
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + archivo.getName() + "\"")
+                // Volcamos la corriente de bytes finales dentro del cuerpo de la respuesta de red.
+                .body(recurso);
+        // Cerramos el método de control de descargas seguras.
     }
-// Cerramos la arquitectura definitiva de la clase.
+// Cerramos la arquitectura de la clase controladora de descargas.
 }

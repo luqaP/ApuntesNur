@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Apuntes NUR</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .caja-login { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .caja-login h2 { color: #1e3a8a; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #2563eb; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        button:hover { background-color: #1d4ed8; }
+        /* Estilo de la alerta roja solicitada */
+        .alerta-error { background-color: #fee2e2; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; font-weight: bold; border: 1px solid #f87171; }
+    </style>
+</head>
+<body>
+<div class="caja-login">
+    <h2>Ingreso Plataforma NUR</h2>
+
+    <div th:if="${param.error != null}" class="alerta-error">
+        Usuario o contraseña incorrectos. Inténtalo de nuevo.
+    </div>
+
+    <div th:if="${param.exito != null}" style="background-color: #d1fae5; color: #065f46; padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 14px; font-weight: bold; border: 1px solid #34d399;">
+        Cuenta creada exitosamente. Inicia sesión.
+    </div>
+
+    <form action="/login" method="POST">
+        <input type="text" name="aliasUsuario" placeholder="Usuario (Ej: lucca_dev)" required>
+        <input type="password" name="claveUsuario" placeholder="Contraseña" required>
+        <button type="submit">Entrar</button>
+    </form>
+    <p style="margin-top: 20px; font-size: 14px; color: #64748b;">¿No tienes cuenta? <a href="/registro.html" style="color: #2563eb;">Regístrate aquí</a></p>
+</div>
+</body>
+</html>
